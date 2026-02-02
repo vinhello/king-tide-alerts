@@ -1,0 +1,20 @@
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    DATABASE_URL: str = "postgresql://localhost/king_tide_alerts"
+    RESEND_API_KEY: str = ""
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_PHONE_NUMBER: str = ""
+    STRIPE_API_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    APP_URL: str = "http://localhost:5173"
+    NOAA_STATION_ID: str = "9414290"
+    KING_TIDE_THRESHOLD: float = 1.0
+    ENVIRONMENT: str = "development"
+
+    model_config = {"env_file": ".env", "extra": "ignore"}
+
+
+settings = Settings()
