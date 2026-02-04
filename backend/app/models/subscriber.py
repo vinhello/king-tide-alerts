@@ -23,7 +23,8 @@ class Subscriber(Base):
     email = Column(String, unique=True, nullable=True)
     phone = Column(String, unique=True, nullable=True)
     notification_preference = Column(
-        Enum(NotificationPreference), nullable=False
+        Enum(NotificationPreference, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
     )
     unsubscribe_token = Column(String, unique=True, nullable=False)
     confirmed = Column(Boolean, default=False, nullable=False)

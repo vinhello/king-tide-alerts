@@ -24,7 +24,10 @@ class NotificationSent(Base):
     king_tide_event_id = Column(
         Uuid, ForeignKey("king_tide_events.id"), nullable=True
     )
-    notification_type = Column(Enum(NotificationType), nullable=False)
+    notification_type = Column(
+        Enum(NotificationType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     sent_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
