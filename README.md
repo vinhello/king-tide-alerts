@@ -1,14 +1,18 @@
 # King Tide Alerts
 
-Get notified before king tides flood the Bay Trail through Sausalito. Free email and SMS alerts so you can plan your bike commute.
+Get notified before high tides flood the Bay Trail through Sausalito. Free email and SMS alerts so you can plan your bike commute.
+
+**Website:** [kingtidealert.com](https://kingtidealert.com)
 
 ## How it works
 
-1. Subscribe with your email or phone number
+1. Subscribe with your email or phone number at [kingtidealert.com](https://kingtidealert.com)
 2. We check NOAA tide predictions daily at 6 AM Pacific
-3. When a king tide is forecasted (> 1.0 ft above MHHW at the Golden Gate), you get alerted:
+3. When a high tide above 6.0 ft (MLLW) is forecasted at the Sausalito station, you get alerted:
    - **7 days before** — heads up to plan ahead
    - **48 hours before** — reminder to take an alternate route
+4. Alerts include the predicted peak time, a flooding window (estimated ~2 hours before and after peak), and a disclaimer
+5. Tides at or above 6.5 ft get a "king tide" callout
 
 ## Tech stack
 
@@ -74,7 +78,7 @@ App runs at http://localhost:5173
 ## Running tests
 
 ```bash
-# Backend (20 tests, 81% coverage)
+# Backend (22 tests)
 cd backend
 pytest tests/ -v
 
@@ -119,8 +123,9 @@ The project deploys as three Railway services:
 | `STRIPE_API_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `APP_URL` | Frontend URL (for confirmation/unsubscribe links) |
-| `NOAA_STATION_ID` | NOAA station (default: `9414290` — Golden Gate) |
-| `KING_TIDE_THRESHOLD` | Height in ft above MHHW (default: `1.0`) |
+| `NOAA_STATION_ID` | NOAA station (default: `9414806` — Sausalito) |
+| `KING_TIDE_THRESHOLD` | Alert threshold in MLLW ft (default: `6.0`) |
+| `KING_TIDE_HEIGHT` | King tide label threshold in MLLW ft (default: `6.5`) |
 | `ENVIRONMENT` | Set to `production` to enable the scheduler |
 
 ### Frontend environment variables
@@ -138,9 +143,10 @@ The project deploys as three Railway services:
 | GET | `/api/confirm/{token}` | Confirm subscription |
 | GET | `/api/unsubscribe/{token}` | Unsubscribe |
 | GET | `/api/tides/upcoming?days=14` | Tide predictions with king tide flags |
+| POST | `/api/admin/test-alert?height=6.8&days_until=7` | Send a test alert to confirmed subscribers |
 | POST | `/api/stripe/create-checkout-session` | Start a donation checkout |
 | POST | `/api/stripe/webhook` | Stripe webhook handler |
 
 ## Data source
 
-Tide predictions come from the [NOAA CO-OPS API](https://tidesandcurrents.noaa.gov/api/) — free, public, no auth required. The primary station is San Francisco / Golden Gate (`9414290`), using the MHHW datum so positive values indicate height above normal high tide.
+Tide predictions come from the [NOAA CO-OPS API](https://tidesandcurrents.noaa.gov/api/) — free, public, no auth required. The station is Sausalito (`9414806`), using the MLLW datum so heights represent absolute feet above mean lower low water.
