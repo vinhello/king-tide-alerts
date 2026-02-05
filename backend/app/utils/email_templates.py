@@ -26,6 +26,7 @@ def king_tide_alert_email(
     unsubscribe_url: str,
 ) -> str:
     urgency = "Heads up" if days_until > 3 else "Reminder"
+    emoji = "👑🌊" if is_king_tide else "🌊"
     alert_type = "King Tide Alert" if is_king_tide else "High Tide Alert"
     king_tide_note = ""
     if is_king_tide:
@@ -38,7 +39,7 @@ def king_tide_alert_email(
     return f"""
     <html>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #1a365d;">🌊 {alert_type}</h1>
+        <h1 style="color: #1a365d;">{emoji} {alert_type}</h1>
         <p>Hi {name},</p>
         <p><strong>{urgency}:</strong> A high tide of <strong>{height:.1f} ft</strong> is expected in <strong>{days_until} days</strong>. Flooding is possible on low-lying areas and bike paths in Sausalito.</p>
         {king_tide_note}
@@ -82,9 +83,10 @@ def king_tide_alert_sms(
     is_king_tide: bool,
     days_until: int,
 ) -> str:
+    emoji = "👑🌊" if is_king_tide else "🌊"
     label = "King tide" if is_king_tide else "High tide"
     return (
-        f"🌊 {label} alert: {height:.1f}ft expected on {event_date}, "
+        f"{emoji} {label} alert: {height:.1f}ft expected on {event_date}, "
         f"peak at {peak_time}. "
         f"Flooding possible {flood_window_start}–{flood_window_end} in Sausalito. "
         f"Plan alternate routes. "
