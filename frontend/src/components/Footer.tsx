@@ -14,7 +14,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-content">
         <button className="donate-button" onClick={handleDonate}>
-          Buy me a coffee ($5)
+          Buy me a coffee
         </button>
         <p className="attribution">
           Tide data from{" "}
