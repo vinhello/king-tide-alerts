@@ -71,27 +71,45 @@ async def send_confirmation(subscriber: Subscriber) -> None:
 
 async def send_king_tide_alert(
     subscriber: Subscriber,
-    event_datetime: datetime,
-    height: float,
+    period_start: datetime,
+    period_end: datetime,
+    peak_datetime: datetime,
+    peak_height: float,
     days_until: int,
 ) -> None:
-    """Send a high tide / king tide alert based on subscriber preference."""
+    """Send a high tide / king tide alert based on subscriber preference.
+
+    Args:
+        subscriber: The subscriber to notify.
+        period_start: Start datetime of the tide period.
+        period_end: End datetime of the tide period (same as start for single-day).
+        peak_datetime: Datetime of the peak tide in the period.
+        peak_height: Height of the peak tide in feet.
+        days_until: Days until the period starts.
+    """
     unsubscribe_url = f"{settings.APP_URL}/unsubscribe/{subscriber.unsubscribe_token}"
-    is_king_tide = height >= settings.KING_TIDE_HEIGHT
+    is_king_tide = peak_height >= settings.KING_TIDE_HEIGHT
 
-    # Compute flooding window: ~2 hours before/after peak
-    if isinstance(event_datetime, datetime):
-        peak_dt = event_datetime
+    # Determine if multi-day period
+    is_multi_day = period_start.date() != period_end.date()
+
+    # Format date range
+    start_date_str = period_start.strftime("%A, %B %-d")
+    if is_multi_day:
+        end_date_str = period_end.strftime("%A, %B %-d")
+        date_range = f"{start_date_str} – {end_date_str}"
     else:
-        peak_dt = datetime.strptime(str(event_datetime), "%Y-%m-%d %H:%M")
+        date_range = start_date_str
 
-    flood_start = peak_dt - timedelta(hours=2)
-    flood_end = peak_dt + timedelta(hours=2)
+    # Peak tide info
+    peak_date = peak_datetime.strftime("%A, %B %-d")
+    peak_time = peak_datetime.strftime("%-I:%M %p")
 
-    event_date = peak_dt.strftime("%A, %B %d, %Y")
-    peak_time = peak_dt.strftime("%I:%M %p").lstrip("0")
-    flood_window_start = flood_start.strftime("%I:%M %p").lstrip("0")
-    flood_window_end = flood_end.strftime("%I:%M %p").lstrip("0")
+    # Flooding window: ~2 hours before/after peak
+    flood_start = peak_datetime - timedelta(hours=2)
+    flood_end = peak_datetime + timedelta(hours=2)
+    flood_window_start = flood_start.strftime("%-I:%M %p")
+    flood_window_end = flood_end.strftime("%-I:%M %p")
 
     alert_label = "King Tide" if is_king_tide else "High Tide"
     pref = subscriber.notification_preference
@@ -100,12 +118,14 @@ async def send_king_tide_alert(
         if subscriber.email:
             html = king_tide_alert_email(
                 name=subscriber.name,
-                event_date=event_date,
+                date_range=date_range,
+                peak_date=peak_date,
                 peak_time=peak_time,
                 flood_window_start=flood_window_start,
                 flood_window_end=flood_window_end,
-                height=height,
+                height=peak_height,
                 is_king_tide=is_king_tide,
+                is_multi_day=is_multi_day,
                 days_until=days_until,
                 unsubscribe_url=unsubscribe_url,
             )
@@ -115,12 +135,14 @@ async def send_king_tide_alert(
     if pref in (NotificationPreference.SMS, NotificationPreference.BOTH):
         if subscriber.phone:
             msg = king_tide_alert_sms(
-                event_date=event_date,
+                date_range=date_range,
+                peak_date=peak_date,
                 peak_time=peak_time,
                 flood_window_start=flood_window_start,
                 flood_window_end=flood_window_end,
-                height=height,
+                height=peak_height,
                 is_king_tide=is_king_tide,
+                is_multi_day=is_multi_day,
                 days_until=days_until,
             )
             await send_sms(subscriber.phone, msg)

@@ -16,12 +16,14 @@ def confirmation_email(name: str, confirm_url: str) -> str:
 
 def king_tide_alert_email(
     name: str,
-    event_date: str,
+    date_range: str,
+    peak_date: str,
     peak_time: str,
     flood_window_start: str,
     flood_window_end: str,
     height: float,
     is_king_tide: bool,
+    is_multi_day: bool,
     days_until: int,
     unsubscribe_url: str,
 ) -> str:
@@ -36,18 +38,29 @@ def king_tide_alert_email(
         </div>
         """
 
+    if is_multi_day:
+        tide_summary = (
+            f"High tides are expected <strong>{date_range}</strong>, "
+            f"peaking at <strong>{height:.1f} ft</strong> on <strong>{peak_date}</strong>."
+        )
+    else:
+        tide_summary = (
+            f"A high tide of <strong>{height:.1f} ft</strong> is expected on "
+            f"<strong>{date_range}</strong>."
+        )
+
     return f"""
     <html>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #1a365d;">{emoji} {alert_type}</h1>
         <p>Hi {name},</p>
-        <p><strong>{urgency}:</strong> A high tide of <strong>{height:.1f} ft</strong> is expected in <strong>{days_until} days</strong>. Flooding is possible on low-lying areas and bike paths in Sausalito.</p>
+        <p><strong>{urgency}:</strong> {tide_summary} Flooding is possible on low-lying areas and bike paths in Sausalito.</p>
         {king_tide_note}
         <div style="background-color: #ebf8ff; border-left: 4px solid #2b6cb0; padding: 16px; margin: 16px 0; border-radius: 4px;">
-            <p style="margin: 0;"><strong>Date:</strong> {event_date}</p>
-            <p style="margin: 8px 0 0;"><strong>Peak tide:</strong> {peak_time}</p>
-            <p style="margin: 8px 0 0;"><strong>Flooding possible:</strong> {flood_window_start} – {flood_window_end} (estimate)</p>
-            <p style="margin: 8px 0 0;"><strong>Predicted height:</strong> {height:.1f} ft</p>
+            <p style="margin: 0;"><strong>Dates:</strong> {date_range}</p>
+            <p style="margin: 8px 0 0;"><strong>Peak tide:</strong> {peak_time} on {peak_date}</p>
+            <p style="margin: 8px 0 0;"><strong>Flooding possible:</strong> {flood_window_start} – {flood_window_end} (estimate, around peak)</p>
+            <p style="margin: 8px 0 0;"><strong>Peak height:</strong> {height:.1f} ft</p>
             <p style="margin: 8px 0 0;"><strong>Station:</strong> Sausalito</p>
         </div>
         <p>Consider alternate routes or plan your ride around the flooding window.</p>
@@ -75,18 +88,29 @@ def confirmation_sms(name: str, confirm_url: str) -> str:
 
 
 def king_tide_alert_sms(
-    event_date: str,
+    date_range: str,
+    peak_date: str,
     peak_time: str,
     flood_window_start: str,
     flood_window_end: str,
     height: float,
     is_king_tide: bool,
+    is_multi_day: bool,
     days_until: int,
 ) -> str:
     emoji = "👑🌊" if is_king_tide else "🌊"
     label = "King tide" if is_king_tide else "High tide"
+    if is_multi_day:
+        return (
+            f"{emoji} {label} alert: High tides {date_range}, "
+            f"peaking at {height:.1f}ft on {peak_date} at {peak_time}. "
+            f"Flooding possible {flood_window_start}–{flood_window_end} (around peak) in Sausalito. "
+            f"Plan alternate routes. "
+            f"Times are estimates — follow official guidance. "
+            f"kingtidealert.com"
+        )
     return (
-        f"{emoji} {label} alert: {height:.1f}ft expected on {event_date}, "
+        f"{emoji} {label} alert: {height:.1f}ft expected on {date_range}, "
         f"peak at {peak_time}. "
         f"Flooding possible {flood_window_start}–{flood_window_end} in Sausalito. "
         f"Plan alternate routes. "

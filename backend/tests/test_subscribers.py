@@ -1,5 +1,6 @@
 from unittest.mock import patch, AsyncMock
 
+from app.models.king_tide_event import KingTideEvent
 from app.models.subscriber import Subscriber
 
 
@@ -165,6 +166,9 @@ def test_test_alert_sends_to_confirmed_subscribers(client, test_db):
     assert response.status_code == 200
     assert response.json()["message"] == "Test alert sent to 1 subscriber(s)"
     mock_send.assert_called_once()
+
+    # Verify no KingTideEvent was persisted to the DB
+    assert test_db.query(KingTideEvent).count() == 0
 
 
 def test_test_alert_no_confirmed_subscribers(client):

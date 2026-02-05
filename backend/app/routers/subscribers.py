@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models.king_tide_event import KingTideEvent
 from app.models.subscriber import Subscriber
 from app.schemas.subscriber import (
     ConfirmResponse,
@@ -113,20 +112,15 @@ async def test_alert(
         raise HTTPException(status_code=404, detail="No confirmed subscribers found")
 
     event_dt = datetime.now(timezone.utc) + timedelta(days=days_until)
-    event = KingTideEvent(
-        event_datetime=event_dt,
-        predicted_height=height,
-        station_id=settings.NOAA_STATION_ID,
-    )
-    db.add(event)
-    db.commit()
 
     notified = 0
     for subscriber in subscribers:
         await send_king_tide_alert(
             subscriber=subscriber,
-            event_datetime=event.event_datetime,
-            height=event.predicted_height,
+            period_start=event_dt,
+            period_end=event_dt,
+            peak_datetime=event_dt,
+            peak_height=height,
             days_until=days_until,
         )
         notified += 1
