@@ -143,7 +143,6 @@ The project deploys as three Railway services:
 | GET | `/api/confirm/{token}` | Confirm subscription |
 | GET | `/api/unsubscribe/{token}` | Unsubscribe |
 | GET | `/api/tides/upcoming?days=14` | Tide predictions with king tide flags |
-| POST | `/api/admin/test-alert?height=6.8&days_until=7` | Send a test alert to confirmed subscribers |
 | POST | `/api/stripe/create-checkout-session` | Start a donation checkout |
 | POST | `/api/stripe/webhook` | Stripe webhook handler |
 
