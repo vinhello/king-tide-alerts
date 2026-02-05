@@ -4,8 +4,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
+from app.config import settings
 from app.database import Base, get_db
 from app.main import app
+
+# Set admin API key for tests
+settings.ADMIN_API_KEY = "test-key"
 
 
 # Use SQLite in-memory for tests

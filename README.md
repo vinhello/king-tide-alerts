@@ -78,7 +78,7 @@ App runs at http://localhost:5173
 ## Running tests
 
 ```bash
-# Backend (22 tests)
+# Backend (24 tests)
 cd backend
 pytest tests/ -v
 
@@ -122,6 +122,7 @@ The project deploys as three Railway services:
 | `TWILIO_PHONE_NUMBER` | Twilio phone number |
 | `STRIPE_API_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `ADMIN_API_KEY` | API key for admin endpoints (e.g. test-alert) |
 | `APP_URL` | Frontend URL (for confirmation/unsubscribe links) |
 | `NOAA_STATION_ID` | NOAA station (default: `9414806` — Sausalito) |
 | `KING_TIDE_THRESHOLD` | Alert threshold in MLLW ft (default: `6.0`) |

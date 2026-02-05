@@ -157,7 +157,10 @@ def test_test_alert_sends_to_confirmed_subscribers(client, test_db):
     test_db.commit()
 
     with patch("app.routers.subscribers.send_king_tide_alert", new_callable=AsyncMock) as mock_send:
-        response = client.post("/api/admin/test-alert")
+        response = client.post(
+            "/api/admin/test-alert",
+            headers={"x-api-key": "test-key"},
+        )
 
     assert response.status_code == 200
     assert response.json()["message"] == "Test alert sent to 1 subscriber(s)"
@@ -166,5 +169,23 @@ def test_test_alert_sends_to_confirmed_subscribers(client, test_db):
 
 def test_test_alert_no_confirmed_subscribers(client):
     """POST /api/admin/test-alert should return 404 if no confirmed subscribers."""
-    response = client.post("/api/admin/test-alert")
+    response = client.post(
+        "/api/admin/test-alert",
+        headers={"x-api-key": "test-key"},
+    )
     assert response.status_code == 404
+
+
+def test_test_alert_rejected_without_api_key(client):
+    """POST /api/admin/test-alert without API key should return 422."""
+    response = client.post("/api/admin/test-alert")
+    assert response.status_code == 422
+
+
+def test_test_alert_rejected_with_wrong_api_key(client):
+    """POST /api/admin/test-alert with wrong API key should return 403."""
+    response = client.post(
+        "/api/admin/test-alert",
+        headers={"x-api-key": "wrong-key"},
+    )
+    assert response.status_code == 403

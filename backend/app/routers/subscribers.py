@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -95,7 +95,10 @@ async def test_alert(
     height: float = 6.8,
     days_until: int = 7,
     db: Session = Depends(get_db),
+    x_api_key: str = Header(...),
 ):
+    if not settings.ADMIN_API_KEY or x_api_key != settings.ADMIN_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API key")
     """Send a test alert to all confirmed subscribers.
 
     Query params:
