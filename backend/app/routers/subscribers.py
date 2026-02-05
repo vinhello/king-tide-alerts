@@ -91,19 +91,28 @@ async def unsubscribe(token: str, db: Session = Depends(get_db)):
 
 
 @router.post("/admin/test-alert")
-async def test_alert(db: Session = Depends(get_db)):
-    """Send a test king tide alert to all confirmed subscribers."""
+async def test_alert(
+    height: float = 6.8,
+    days_until: int = 7,
+    db: Session = Depends(get_db),
+):
+    """Send a test alert to all confirmed subscribers.
+
+    Query params:
+        height: predicted tide height in ft (default 6.8, king tide).
+                Use e.g. 6.2 for a non-king-tide high-tide alert.
+        days_until: simulated days until the event (default 7).
+    """
     subscribers = (
         db.query(Subscriber).filter(Subscriber.confirmed.is_(True)).all()
     )
     if not subscribers:
         raise HTTPException(status_code=404, detail="No confirmed subscribers found")
 
-    # Create a fake king tide event 7 days from now
-    event_dt = datetime.now(timezone.utc) + timedelta(days=7)
+    event_dt = datetime.now(timezone.utc) + timedelta(days=days_until)
     event = KingTideEvent(
         event_datetime=event_dt,
-        predicted_height=6.8,
+        predicted_height=height,
         station_id=settings.NOAA_STATION_ID,
     )
     db.add(event)
@@ -115,7 +124,7 @@ async def test_alert(db: Session = Depends(get_db)):
             subscriber=subscriber,
             event_datetime=event.event_datetime,
             height=event.predicted_height,
-            days_until=7,
+            days_until=days_until,
         )
         notified += 1
 

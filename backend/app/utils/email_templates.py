@@ -7,6 +7,7 @@ def confirmation_email(name: str, confirm_url: str) -> str:
         <p>Thanks for subscribing to King Tide Alerts for the SF Bay Area! Please confirm your subscription by clicking the button below:</p>
         <a href="{confirm_url}" style="display: inline-block; background-color: #2b6cb0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">Confirm Subscription</a>
         <p>Once confirmed, you'll receive alerts when high tides are forecasted that could cause flooding on low-lying areas and bike paths in Sausalito.</p>
+        <p>Visit <a href="https://kingtidealert.com" style="color: #2b6cb0;">kingtidealert.com</a> to view upcoming tides.</p>
         <p style="color: #718096; font-size: 14px;">If you didn't sign up for this, you can safely ignore this email.</p>
     </body>
     </html>
@@ -49,6 +50,9 @@ def king_tide_alert_email(
             <p style="margin: 8px 0 0;"><strong>Station:</strong> Sausalito</p>
         </div>
         <p>Consider alternate routes or plan your ride around the flooding window.</p>
+        <p style="margin-top: 16px;">
+            <a href="https://kingtidealert.com" style="color: #2b6cb0;">kingtidealert.com</a> — View upcoming tides and manage your subscription.
+        </p>
         <p style="color: #718096; font-size: 13px; margin-top: 24px; line-height: 1.5;">
             <strong>Disclaimer:</strong> Flooding times are estimates based on predicted tide data from NOAA.
             Actual conditions may vary due to weather, wind, and other factors.
@@ -84,5 +88,6 @@ def king_tide_alert_sms(
         f"peak at {peak_time}. "
         f"Flooding possible {flood_window_start}–{flood_window_end} in Sausalito. "
         f"Plan alternate routes. "
-        f"Times are estimates — follow official guidance."
+        f"Times are estimates — follow official guidance. "
+        f"kingtidealert.com"
     )
