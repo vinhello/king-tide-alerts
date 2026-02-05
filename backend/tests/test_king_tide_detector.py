@@ -13,8 +13,8 @@ from app.services.king_tide_detector import detect_and_store_king_tides, send_al
 async def test_detect_stores_new_events(test_db):
     """Should store new king tide events from NOAA data."""
     mock_king_tides = [
-        {"datetime": "2026-02-15 03:00", "height": 1.84, "type": "H"},
-        {"datetime": "2026-02-16 03:30", "height": 1.92, "type": "H"},
+        {"datetime": "2026-02-15 03:00", "height": 6.8, "type": "H"},
+        {"datetime": "2026-02-16 03:30", "height": 7.1, "type": "H"},
     ]
 
     with patch(
@@ -34,14 +34,14 @@ async def test_detect_skips_existing_events(test_db):
     event_dt = datetime(2026, 2, 15, 3, 0, tzinfo=timezone.utc)
     existing = KingTideEvent(
         event_datetime=event_dt,
-        predicted_height=1.84,
-        station_id="9414290",
+        predicted_height=6.8,
+        station_id="9414806",
     )
     test_db.add(existing)
     test_db.commit()
 
     mock_king_tides = [
-        {"datetime": "2026-02-15 03:00", "height": 1.84, "type": "H"},
+        {"datetime": "2026-02-15 03:00", "height": 6.8, "type": "H"},
     ]
 
     with patch(
@@ -71,8 +71,8 @@ async def test_send_seven_day_alert(test_db):
     # Create an event 6 days from now
     event = KingTideEvent(
         event_datetime=datetime.now(timezone.utc) + timedelta(days=6),
-        predicted_height=1.84,
-        station_id="9414290",
+        predicted_height=6.8,
+        station_id="9414806",
     )
     test_db.add(event)
     test_db.commit()
@@ -106,8 +106,8 @@ async def test_send_forty_eight_hour_reminder(test_db):
 
     event = KingTideEvent(
         event_datetime=datetime.now(timezone.utc) + timedelta(days=2),
-        predicted_height=1.92,
-        station_id="9414290",
+        predicted_height=7.1,
+        station_id="9414806",
     )
     test_db.add(event)
     test_db.commit()
@@ -136,8 +136,8 @@ async def test_no_duplicate_notifications(test_db):
 
     event = KingTideEvent(
         event_datetime=datetime.now(timezone.utc) + timedelta(days=6),
-        predicted_height=1.84,
-        station_id="9414290",
+        predicted_height=6.8,
+        station_id="9414806",
     )
     test_db.add(event)
     test_db.commit()

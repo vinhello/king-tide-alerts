@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import resend
 from twilio.rest import Client as TwilioClient
@@ -75,34 +75,52 @@ async def send_king_tide_alert(
     height: float,
     days_until: int,
 ) -> None:
-    """Send a king tide alert to a subscriber based on their preference."""
-
+    """Send a high tide / king tide alert based on subscriber preference."""
     unsubscribe_url = f"{settings.APP_URL}/unsubscribe/{subscriber.unsubscribe_token}"
+    is_king_tide = height >= settings.KING_TIDE_HEIGHT
 
+    # Compute flooding window: ~2 hours before/after peak
     if isinstance(event_datetime, datetime):
-        event_dt_str = event_datetime.strftime("%B %d, %Y at %I:%M %p")
+        peak_dt = event_datetime
     else:
-        event_dt_str = str(event_datetime)
+        peak_dt = datetime.strptime(str(event_datetime), "%Y-%m-%d %H:%M")
 
+    flood_start = peak_dt - timedelta(hours=2)
+    flood_end = peak_dt + timedelta(hours=2)
+
+    event_date = peak_dt.strftime("%A, %B %d, %Y")
+    peak_time = peak_dt.strftime("%I:%M %p").lstrip("0")
+    flood_window_start = flood_start.strftime("%I:%M %p").lstrip("0")
+    flood_window_end = flood_end.strftime("%I:%M %p").lstrip("0")
+
+    alert_label = "King Tide" if is_king_tide else "High Tide"
     pref = subscriber.notification_preference
 
     if pref in (NotificationPreference.EMAIL, NotificationPreference.BOTH):
         if subscriber.email:
             html = king_tide_alert_email(
                 name=subscriber.name,
-                event_datetime=event_dt_str,
+                event_date=event_date,
+                peak_time=peak_time,
+                flood_window_start=flood_window_start,
+                flood_window_end=flood_window_end,
                 height=height,
+                is_king_tide=is_king_tide,
                 days_until=days_until,
                 unsubscribe_url=unsubscribe_url,
             )
-            subject = f"🌊 King Tide Alert — {days_until} days away"
+            subject = f"🌊 {alert_label} Alert — {days_until} days away"
             await send_email(subscriber.email, subject, html)
 
     if pref in (NotificationPreference.SMS, NotificationPreference.BOTH):
         if subscriber.phone:
             msg = king_tide_alert_sms(
-                event_datetime=event_dt_str,
+                event_date=event_date,
+                peak_time=peak_time,
+                flood_window_start=flood_window_start,
+                flood_window_end=flood_window_end,
                 height=height,
+                is_king_tide=is_king_tide,
                 days_until=days_until,
             )
             await send_sms(subscriber.phone, msg)

@@ -10,8 +10,9 @@ class Settings(BaseSettings):
     STRIPE_API_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     APP_URL: str = "http://localhost:5173"
-    NOAA_STATION_ID: str = "9414290"
-    KING_TIDE_THRESHOLD: float = 1.0
+    NOAA_STATION_ID: str = "9414806"
+    KING_TIDE_THRESHOLD: float = 6.0
+    KING_TIDE_HEIGHT: float = 6.5
     ENVIRONMENT: str = "development"
 
     model_config = {"env_file": ".env", "extra": "ignore"}

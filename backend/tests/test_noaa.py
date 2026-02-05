@@ -24,7 +24,7 @@ async def test_fetch_tide_predictions_parses_response(mock_noaa_response):
 
     assert len(result) == 5  # 5 high tides, 2 low tides filtered out
     assert all(t["type"] == "H" for t in result)
-    assert result[0]["height"] == 1.84
+    assert result[0]["height"] == 6.8
     assert result[0]["datetime"] == "2026-02-10 01:41"
 
 
@@ -43,10 +43,10 @@ async def test_get_king_tides_filters_above_threshold(mock_noaa_response):
         mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_client_cls.return_value = mock_client
 
-        result = await get_king_tides(days_ahead=7, threshold=1.0)
+        result = await get_king_tides(days_ahead=7, threshold=6.0)
 
-    assert len(result) == 2  # Only 1.84 and 1.92 are above 1.0
-    assert all(t["height"] > 1.0 for t in result)
+    assert len(result) == 2  # Only 6.8 and 7.1 are above 6.0
+    assert all(t["height"] > 6.0 for t in result)
 
 
 @pytest.mark.asyncio

@@ -27,7 +27,7 @@ async def fetch_tide_predictions(
         "product": "predictions",
         "begin_date": begin,
         "end_date": end,
-        "datum": "MHHW",
+        "datum": "MLLW",
         "station": station,
         "interval": "hilo",
         "units": "english",

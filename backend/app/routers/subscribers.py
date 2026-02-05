@@ -1,9 +1,12 @@
 import secrets
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
+from app.models.king_tide_event import KingTideEvent
 from app.models.subscriber import Subscriber
 from app.schemas.subscriber import (
     ConfirmResponse,
@@ -11,7 +14,7 @@ from app.schemas.subscriber import (
     SubscriberResponse,
     UnsubscribeResponse,
 )
-from app.services.notification import send_confirmation
+from app.services.notification import send_confirmation, send_king_tide_alert
 
 router = APIRouter(prefix="/api", tags=["subscribers"])
 
@@ -85,3 +88,35 @@ async def unsubscribe(token: str, db: Session = Depends(get_db)):
     db.commit()
 
     return UnsubscribeResponse(message="You've been unsubscribed from King Tide Alerts.")
+
+
+@router.post("/admin/test-alert")
+async def test_alert(db: Session = Depends(get_db)):
+    """Send a test king tide alert to all confirmed subscribers."""
+    subscribers = (
+        db.query(Subscriber).filter(Subscriber.confirmed.is_(True)).all()
+    )
+    if not subscribers:
+        raise HTTPException(status_code=404, detail="No confirmed subscribers found")
+
+    # Create a fake king tide event 7 days from now
+    event_dt = datetime.now(timezone.utc) + timedelta(days=7)
+    event = KingTideEvent(
+        event_datetime=event_dt,
+        predicted_height=6.8,
+        station_id=settings.NOAA_STATION_ID,
+    )
+    db.add(event)
+    db.commit()
+
+    notified = 0
+    for subscriber in subscribers:
+        await send_king_tide_alert(
+            subscriber=subscriber,
+            event_datetime=event.event_datetime,
+            height=event.predicted_height,
+            days_until=7,
+        )
+        notified += 1
+
+    return {"message": f"Test alert sent to {notified} subscriber(s)"}

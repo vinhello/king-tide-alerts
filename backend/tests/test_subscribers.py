@@ -137,3 +137,34 @@ def test_invalid_token_returns_404(client):
 
     response = client.get("/api/unsubscribe/invalid-token-xyz")
     assert response.status_code == 404
+
+
+def test_test_alert_sends_to_confirmed_subscribers(client, test_db):
+    """POST /api/admin/test-alert should send alerts to confirmed subscribers."""
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
+        client.post(
+            "/api/subscribe",
+            json={
+                "name": "Alert Test",
+                "email": "alert@example.com",
+                "notification_preference": "email",
+            },
+        )
+
+    # Confirm the subscriber
+    subscriber = test_db.query(Subscriber).filter_by(email="alert@example.com").first()
+    subscriber.confirmed = True
+    test_db.commit()
+
+    with patch("app.routers.subscribers.send_king_tide_alert", new_callable=AsyncMock) as mock_send:
+        response = client.post("/api/admin/test-alert")
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Test alert sent to 1 subscriber(s)"
+    mock_send.assert_called_once()
+
+
+def test_test_alert_no_confirmed_subscribers(client):
+    """POST /api/admin/test-alert should return 404 if no confirmed subscribers."""
+    response = client.post("/api/admin/test-alert")
+    assert response.status_code == 404

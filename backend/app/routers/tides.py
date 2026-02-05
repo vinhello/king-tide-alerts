@@ -16,7 +16,7 @@ async def upcoming_tides(days: int = Query(default=14, ge=1, le=30)):
             datetime=p["datetime"],
             height=p["height"],
             type=p["type"],
-            is_king_tide=p["height"] > settings.KING_TIDE_THRESHOLD,
+            is_king_tide=p["height"] >= settings.KING_TIDE_HEIGHT,
         )
         for p in predictions
     ]
