@@ -29,24 +29,16 @@ describe("SubscribeForm", () => {
     expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument();
   });
 
-  it("shows phone field when sms selected", async () => {
-    const user = userEvent.setup();
+  it("sms and both options are disabled with coming soon label", () => {
     render(<SubscribeForm />);
+    const select = screen.getByLabelText(/notify me via/i);
+    const smsOption = select.querySelector('option[value="sms"]') as HTMLOptionElement;
+    const bothOption = select.querySelector('option[value="both"]') as HTMLOptionElement;
 
-    await user.selectOptions(screen.getByLabelText(/notify me via/i), "sms");
-
-    expect(screen.getByLabelText(/phone/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
-  });
-
-  it("shows both fields when both selected", async () => {
-    const user = userEvent.setup();
-    render(<SubscribeForm />);
-
-    await user.selectOptions(screen.getByLabelText(/notify me via/i), "both");
-
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/phone/i)).toBeInTheDocument();
+    expect(smsOption.disabled).toBe(true);
+    expect(smsOption.textContent).toContain("coming soon");
+    expect(bothOption.disabled).toBe(true);
+    expect(bothOption.textContent).toContain("coming soon");
   });
 
   it("submits successfully and shows confirmation message", async () => {

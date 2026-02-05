@@ -83,8 +83,8 @@ export default function SubscribeForm() {
             }
           >
             <option value="email">Email</option>
-            <option value="sms">SMS</option>
-            <option value="both">Both</option>
+            <option value="sms" disabled>SMS (coming soon)</option>
+            <option value="both" disabled>Both (coming soon)</option>
           </select>
         </div>
 
