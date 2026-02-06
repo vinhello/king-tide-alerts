@@ -78,11 +78,11 @@ App runs at http://localhost:5173
 ## Running tests
 
 ```bash
-# Backend (24 tests)
+# Backend (32 tests)
 cd backend
 pytest tests/ -v
 
-# Frontend (14 tests)
+# Frontend (13 tests)
 cd frontend
 npx vitest run
 ```
