@@ -16,7 +16,7 @@ export default function Feedback() {
 
     // Create mailto link with subject and body
     const mailtoLink = `mailto:info@kingtidealert.com?subject=${encodeURIComponent(
-      subject || "King Tide Alerts Feedback"
+      subject || "King Tide Alert Feedback"
     )}&body=${encodeURIComponent(
       message + (email ? `\n\nReply to: ${email}` : "")
     )}`;
@@ -37,7 +37,7 @@ export default function Feedback() {
             </div>
             <h1 className="text-2xl sm:text-3xl mb-3">Send Us Feedback</h1>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Have suggestions, questions, or issues with King Tide Alerts? We'd love to hear from you.
+              Have suggestions, questions, or issues with King Tide Alert? We'd love to hear from you.
             </p>
           </div>
 

@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
 
             <h2>What We Collect</h2>
             <p>
-              When you subscribe to King Tide Alerts, we collect the following
+              When you subscribe to King Tide Alert, we collect the following
               information:
             </p>
             <ul>

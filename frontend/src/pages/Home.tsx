@@ -37,7 +37,7 @@ export default function Home() {
             <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
               <Waves className="h-12 w-12 sm:h-16 sm:w-16 mb-2" />
               <h1 className="text-3xl sm:text-4xl md:text-5xl leading-tight">
-                King Tide Alerts
+                King Tide Alert
               </h1>
               <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl leading-relaxed">
                 Get notified before high tides flood the Bay Trail bike path through Sausalito, California.

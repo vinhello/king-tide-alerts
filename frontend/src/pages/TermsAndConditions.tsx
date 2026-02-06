@@ -16,7 +16,7 @@ export default function TermsAndConditions() {
             <h2>Program Information</h2>
             <ul>
               <li>
-                <strong>Program name:</strong> King Tide Alerts
+                <strong>Program name:</strong> King Tide Alert
               </li>
               <li>
                 <strong>Description:</strong> SMS and email alerts for high tides
@@ -50,7 +50,7 @@ export default function TermsAndConditions() {
 
             <h2>Service Description</h2>
             <p>
-              King Tide Alerts uses tide prediction data from NOAA to notify
+              King Tide Alert uses tide prediction data from NOAA to notify
               subscribers before high tides that may cause flooding in Sausalito.
               Alerts are sent approximately 7 days and 48 hours before predicted
               high tide events.

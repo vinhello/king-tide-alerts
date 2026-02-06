@@ -13,7 +13,7 @@ export default function Thanks() {
           <Heart className="h-12 w-12 sm:h-16 sm:w-16 text-accent mb-6" />
           <h1 className="text-2xl sm:text-3xl mb-4">Thank you!</h1>
           <p className="text-muted-foreground mb-8 max-w-md">
-            Your support helps keep King Tide Alerts running. We appreciate it!
+            Your support helps keep King Tide Alert running. We appreciate it!
           </p>
           <Link
             to="/"
