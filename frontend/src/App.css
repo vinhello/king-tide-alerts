@@ -230,3 +230,75 @@ body {
 .back-link:hover {
   text-decoration: underline;
 }
+
+/* Legal Pages */
+.legal-page {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.legal-page h1 {
+  color: var(--blue-900);
+  margin-bottom: 0.5rem;
+}
+
+.legal-updated {
+  color: var(--gray-600);
+  font-size: 0.875rem;
+  margin-bottom: 2rem;
+}
+
+.legal-page section {
+  margin-bottom: 2rem;
+}
+
+.legal-page h2 {
+  color: var(--blue-900);
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-page p {
+  margin-bottom: 0.75rem;
+}
+
+.legal-page ul {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-page li {
+  margin-bottom: 0.5rem;
+}
+
+.legal-page a {
+  color: var(--blue-700);
+}
+
+/* Consent Checkbox */
+.consent-group {
+  margin-top: 1rem;
+}
+
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-weight: normal;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.consent-label input[type="checkbox"] {
+  width: auto;
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.consent-label a {
+  color: var(--blue-700);
+}

@@ -27,6 +27,10 @@ export default function Footer() {
           </a>
         </p>
         <p className="footer-links">
+          <a href="/privacy-policy">Privacy Policy</a>
+          {" | "}
+          <a href="/terms-and-conditions">Terms</a>
+          {" | "}
           <a href="/unsubscribe">Unsubscribe</a>
         </p>
       </div>

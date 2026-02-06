@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import type { NotificationPreference, SubscribeRequest } from "../types";
 import { subscribe } from "../services/api";
 
@@ -8,6 +9,7 @@ export default function SubscribeForm() {
   const [phone, setPhone] = useState("");
   const [preference, setPreference] =
     useState<NotificationPreference>("email");
+  const [smsConsent, setSmsConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -113,6 +115,26 @@ export default function SubscribeForm() {
               required
               placeholder="+1 (555) 123-4567"
             />
+          </div>
+        )}
+
+        {(preference === "sms" || preference === "both") && (
+          <div className="form-group consent-group">
+            <label className="consent-label">
+              <input
+                type="checkbox"
+                checked={smsConsent}
+                onChange={(e) => setSmsConsent(e.target.checked)}
+                required
+              />
+              <span>
+                I agree to receive SMS tide alerts at this number. Message
+                frequency varies. Msg &amp; data rates may apply. Reply STOP to
+                unsubscribe, HELP for help. See{" "}
+                <Link to="/terms-and-conditions">Terms</Link> and{" "}
+                <Link to="/privacy-policy">Privacy Policy</Link>.
+              </span>
+            </label>
           </div>
         )}
 

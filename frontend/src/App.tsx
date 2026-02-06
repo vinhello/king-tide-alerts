@@ -3,6 +3,8 @@ import Home from "./pages/Home";
 import Confirmation from "./pages/Confirmation";
 import Unsubscribe from "./pages/Unsubscribe";
 import Thanks from "./pages/Thanks";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
 import "./App.css";
 
 function App() {
@@ -13,6 +15,8 @@ function App() {
         <Route path="/confirm/:token" element={<Confirmation />} />
         <Route path="/unsubscribe/:token?" element={<Unsubscribe />} />
         <Route path="/thanks" element={<Thanks />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
       </Routes>
     </BrowserRouter>
   );

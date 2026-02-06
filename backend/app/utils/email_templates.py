@@ -83,7 +83,8 @@ def king_tide_alert_email(
 
 def confirmation_sms(name: str, confirm_url: str) -> str:
     return (
-        f"King Tide Alerts: Hi {name}! Confirm your subscription: {confirm_url}"
+        f"King Tide Alerts: Hi {name}! Confirm your subscription: {confirm_url} "
+        f"Reply STOP to opt out."
     )
 
 
@@ -98,22 +99,19 @@ def king_tide_alert_sms(
     is_multi_day: bool,
     days_until: int,
 ) -> str:
-    emoji = "👑🌊" if is_king_tide else "🌊"
     label = "King tide" if is_king_tide else "High tide"
     if is_multi_day:
         return (
-            f"{emoji} {label} alert: High tides {date_range}, "
+            f"King Tide Alerts: {label} {date_range}, "
             f"peaking at {height:.1f}ft on {peak_date} at {peak_time}. "
-            f"Flooding possible {flood_window_start}–{flood_window_end} (around peak) in Sausalito. "
+            f"Flooding possible {flood_window_start}-{flood_window_end} in Sausalito. "
             f"Plan alternate routes. "
-            f"Times are estimates — follow official guidance. "
-            f"kingtidealert.com"
+            f"Reply STOP to opt out. kingtidealert.com"
         )
     return (
-        f"{emoji} {label} alert: {height:.1f}ft expected on {date_range}, "
+        f"King Tide Alerts: {label} of {height:.1f}ft expected {date_range}, "
         f"peak at {peak_time}. "
-        f"Flooding possible {flood_window_start}–{flood_window_end} in Sausalito. "
+        f"Flooding possible {flood_window_start}-{flood_window_end} in Sausalito. "
         f"Plan alternate routes. "
-        f"Times are estimates — follow official guidance. "
-        f"kingtidealert.com"
+        f"Reply STOP to opt out. kingtidealert.com"
     )
