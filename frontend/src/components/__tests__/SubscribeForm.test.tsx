@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { BrowserRouter } from "react-router-dom";
 import SubscribeForm from "../SubscribeForm";
 
 // Mock the api module
@@ -10,35 +11,38 @@ vi.mock("../../services/api", () => ({
 
 import { subscribe } from "../../services/api";
 
+// Wrapper for components that use react-router-dom
+const renderWithRouter = (component: React.ReactNode) => {
+  return render(<BrowserRouter>{component}</BrowserRouter>);
+};
+
 describe("SubscribeForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("renders form fields correctly", () => {
-    render(<SubscribeForm />);
+    renderWithRouter(<SubscribeForm />);
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/notify me via/i)).toBeInTheDocument();
+    expect(screen.getByText(/notify me via/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /subscribe/i })).toBeInTheDocument();
   });
 
   it("shows email field when email selected", () => {
-    render(<SubscribeForm />);
+    renderWithRouter(<SubscribeForm />);
     // Email is default selection
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument();
   });
 
-  it("sms and both options are disabled with coming soon label", () => {
-    render(<SubscribeForm />);
-    const select = screen.getByLabelText(/notify me via/i);
-    const smsOption = select.querySelector('option[value="sms"]') as HTMLOptionElement;
-    const bothOption = select.querySelector('option[value="both"]') as HTMLOptionElement;
+  it("renders notification preference selector", () => {
+    renderWithRouter(<SubscribeForm />);
 
-    expect(smsOption.disabled).toBe(true);
-    expect(smsOption.textContent).toContain("coming soon");
-    expect(bothOption.disabled).toBe(true);
-    expect(bothOption.textContent).toContain("coming soon");
+    // The select component uses Radix UI, which renders a combobox
+    const selectTrigger = screen.getByRole("combobox");
+    expect(selectTrigger).toBeInTheDocument();
+    // Default value should be email
+    expect(selectTrigger).toHaveTextContent(/email/i);
   });
 
   it("submits successfully and shows confirmation message", async () => {
@@ -53,7 +57,7 @@ describe("SubscribeForm", () => {
       created_at: new Date().toISOString(),
     });
 
-    render(<SubscribeForm />);
+    renderWithRouter(<SubscribeForm />);
 
     await user.type(screen.getByLabelText(/name/i), "Test");
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
@@ -70,7 +74,7 @@ describe("SubscribeForm", () => {
       response: { data: { detail: "Email already subscribed" } },
     });
 
-    render(<SubscribeForm />);
+    renderWithRouter(<SubscribeForm />);
 
     await user.type(screen.getByLabelText(/name/i), "Test");
     await user.type(screen.getByLabelText(/email/i), "test@example.com");

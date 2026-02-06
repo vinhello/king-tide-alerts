@@ -5,7 +5,8 @@ import Unsubscribe from "./pages/Unsubscribe";
 import Thanks from "./pages/Thanks";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsAndConditions from "./pages/TermsAndConditions";
-import "./App.css";
+import Feedback from "./pages/Feedback";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -17,6 +18,8 @@ function App() {
         <Route path="/thanks" element={<Thanks />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+        <Route path="/feedback" element={<Feedback />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

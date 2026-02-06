@@ -51,7 +51,7 @@ describe("TideChart", () => {
       expect(screen.getByTestId("line-chart")).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/upcoming high tides/i)).toBeInTheDocument();
+    expect(screen.getByText(/upcoming tides/i)).toBeInTheDocument();
   });
 
   it("shows king tide threshold line", async () => {

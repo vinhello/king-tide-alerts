@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { CheckCircle, Loader2 } from "lucide-react";
 import type { NotificationPreference, SubscribeRequest } from "../types";
 import { subscribe } from "../services/api";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Checkbox } from "./ui/checkbox";
 
 export default function SubscribeForm() {
   const [name, setName] = useState("");
@@ -12,6 +18,9 @@ export default function SubscribeForm() {
   const [smsConsent, setSmsConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+
+  const showEmail = preference === "email" || preference === "both";
+  const showPhone = preference === "sms" || preference === "both";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,105 +56,138 @@ export default function SubscribeForm() {
 
   if (status === "success") {
     return (
-      <section className="subscribe-form">
-        <div className="success-message">
-          <h2>Check your inbox!</h2>
-          <p>
-            We sent a confirmation link. Click it to activate your king tide
-            alerts.
+      <div className="w-full bg-card rounded-lg border border-border p-6 sm:p-8">
+        <div className="flex flex-col items-center text-center gap-4">
+          <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-secondary" />
+          <h3 className="text-lg sm:text-xl">Check your inbox!</h3>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            We sent a confirmation {showEmail ? "email" : "message"}. Click the link to activate your alerts.
           </p>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="subscribe-form">
-      <h2>Get Alerts</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="name">Name</label>
-          <input
+    <div className="w-full bg-card rounded-lg border border-border p-4 sm:p-6">
+      <h2 className="text-xl sm:text-2xl mb-4 sm:mb-6">Get Alerts</h2>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Name Field */}
+        <div className="space-y-2">
+          <Label htmlFor="name">Name *</Label>
+          <Input
             id="name"
             type="text"
+            placeholder="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            placeholder="Your name"
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="preference">Notify me via</label>
-          <select
-            id="preference"
+        {/* Notification Preference */}
+        <div className="space-y-2">
+          <Label htmlFor="preference">Notify me via *</Label>
+          <Select
             value={preference}
-            onChange={(e) =>
-              setPreference(e.target.value as NotificationPreference)
-            }
+            onValueChange={(value: NotificationPreference) => setPreference(value)}
           >
-            <option value="email">Email</option>
-            <option value="sms" disabled>SMS (coming soon)</option>
-            <option value="both" disabled>Both (coming soon)</option>
-          </select>
+            <SelectTrigger id="preference">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="sms" disabled>
+                SMS (coming soon)
+              </SelectItem>
+              <SelectItem value="both" disabled>
+                Both (coming soon)
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {(preference === "email" || preference === "both") && (
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
+        {/* Email Field */}
+        {showEmail && (
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
               id="email"
               type="email"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="you@example.com"
             />
           </div>
         )}
 
-        {(preference === "sms" || preference === "both") && (
-          <div className="form-group">
-            <label htmlFor="phone">Phone</label>
-            <input
+        {/* Phone Field */}
+        {showPhone && (
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone *</Label>
+            <Input
               id="phone"
               type="tel"
+              placeholder="(555) 123-4567"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
-              placeholder="+1 (555) 123-4567"
             />
           </div>
         )}
 
-        {(preference === "sms" || preference === "both") && (
-          <div className="form-group consent-group">
-            <label className="consent-label">
-              <input
-                type="checkbox"
-                checked={smsConsent}
-                onChange={(e) => setSmsConsent(e.target.checked)}
-                required
-              />
-              <span>
-                I agree to receive SMS tide alerts at this number. Message
-                frequency varies. Msg &amp; data rates may apply. Reply STOP to
-                unsubscribe, HELP for help. See{" "}
-                <Link to="/terms-and-conditions">Terms</Link> and{" "}
-                <Link to="/privacy-policy">Privacy Policy</Link>.
-              </span>
+        {/* SMS Consent */}
+        {showPhone && (
+          <div className="flex items-start gap-3 pt-2">
+            <Checkbox
+              id="sms-consent"
+              checked={smsConsent}
+              onCheckedChange={(checked) => setSmsConsent(checked as boolean)}
+              required
+            />
+            <label
+              htmlFor="sms-consent"
+              className="text-sm text-muted-foreground leading-snug cursor-pointer"
+            >
+              I agree to receive SMS alerts and understand that message and data rates may apply.
+              I can opt out at any time by texting STOP. See our{" "}
+              <Link to="/terms-and-conditions" className="text-primary hover:underline">
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link to="/privacy-policy" className="text-primary hover:underline">
+                Privacy Policy
+              </Link>
+              .
             </label>
           </div>
         )}
 
+        {/* Error Message */}
         {status === "error" && (
-          <p className="error-message">{errorMessage}</p>
+          <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+            {errorMessage}
+          </div>
         )}
 
-        <button type="submit" disabled={status === "loading"}>
-          {status === "loading" ? "Subscribing..." : "Subscribe"}
-        </button>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          disabled={status === "loading"}
+          className="w-full"
+        >
+          {status === "loading" ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Subscribing...
+            </>
+          ) : (
+            "Subscribe"
+          )}
+        </Button>
       </form>
-    </section>
+    </div>
   );
 }
