@@ -13,10 +13,26 @@ import type { TidePrediction } from "../types";
 import { getUpcomingTides } from "../services/api";
 
 interface ChartDataPoint {
+  timestamp: number;
   date: string;
-  dateLabel: string;
   height: number;
   isKingTide: boolean;
+}
+
+function formatTickDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatTooltipDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export default function TideChart() {
@@ -31,12 +47,9 @@ export default function TideChart() {
         const response = await getUpcomingTides(14);
         setThreshold(response.threshold);
         setData(
-          response.predictions.map((p: TidePrediction, index: number) => ({
+          response.predictions.map((p: TidePrediction) => ({
+            timestamp: new Date(p.datetime).getTime(),
             date: p.datetime,
-            dateLabel: index % 8 === 0 ? new Date(p.datetime).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }) : "",
             height: p.height,
             isKingTide: p.is_king_tide,
           }))
@@ -89,7 +102,11 @@ export default function TideChart() {
           <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
             <XAxis
-              dataKey="dateLabel"
+              dataKey="timestamp"
+              type="number"
+              scale="time"
+              domain={["dataMin", "dataMax"]}
+              tickFormatter={formatTickDate}
               tick={{ fill: '#64748B', fontSize: 10 }}
               tickLine={{ stroke: '#e5e7eb' }}
             />
@@ -97,7 +114,7 @@ export default function TideChart() {
               label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft', style: { fill: '#64748B', fontSize: 10 } }}
               tick={{ fill: '#64748B', fontSize: 10 }}
               tickLine={{ stroke: '#e5e7eb' }}
-              domain={[0, 8]}
+              domain={[-1, 8]}
             />
             <Tooltip
               contentStyle={{
@@ -106,18 +123,8 @@ export default function TideChart() {
                 borderRadius: '8px',
                 fontSize: '12px',
               }}
-              labelFormatter={(_, payload) => {
-                if (payload && payload[0]) {
-                  return new Date(payload[0].payload.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  });
-                }
-                return '';
-              }}
-  formatter={(value, name) => {
+              labelFormatter={(value) => formatTooltipDate(value as number)}
+              formatter={(value, name) => {
                 if (name === 'height' && typeof value === 'number') {
                   return [`${value.toFixed(1)} ft`, 'Tide Height'];
                 }
@@ -162,7 +169,7 @@ export default function TideChart() {
                 }
                 return null;
               }}
-              activeDot={{ r: 6, fill: '#0A7EA4' }}
+              activeDot={{ r: 4, fill: '#0A7EA4' }}
             />
           </LineChart>
         </ResponsiveContainer>

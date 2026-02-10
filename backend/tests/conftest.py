@@ -55,7 +55,7 @@ def client(test_db):
 
 @pytest.fixture
 def mock_noaa_response():
-    """Sample NOAA API JSON response."""
+    """Sample NOAA API JSON response (hilo interval)."""
     return {
         "predictions": [
             {"t": "2026-02-10 01:41", "v": "6.8", "type": "H"},
@@ -65,5 +65,18 @@ def mock_noaa_response():
             {"t": "2026-02-12 03:00", "v": "5.8", "type": "H"},
             {"t": "2026-02-10 08:12", "v": "0.3", "type": "L"},
             {"t": "2026-02-10 20:45", "v": "1.2", "type": "L"},
+        ],
+    }
+
+
+@pytest.fixture
+def mock_hourly_noaa_response():
+    """Sample NOAA API JSON response (hourly interval)."""
+    return {
+        "predictions": [
+            {"t": "2026-02-10 00:00", "v": "5.2"},
+            {"t": "2026-02-10 01:00", "v": "6.1"},
+            {"t": "2026-02-10 02:00", "v": "6.8"},
+            {"t": "2026-02-10 03:00", "v": "6.3"},
         ],
     }

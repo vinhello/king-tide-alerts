@@ -65,14 +65,13 @@ async def fetch_tide_predictions(
     return high_tides
 
 
-async def fetch_all_tide_predictions(
-    days_ahead: int = 30,
+async def fetch_hourly_tide_predictions(
+    days_ahead: int = 14,
     station_id: str | None = None,
 ) -> list[dict]:
-    """Fetch all high/low tide predictions from NOAA CO-OPS API.
+    """Fetch hourly tide predictions from NOAA CO-OPS API.
 
-    Returns both high (H) and low (L) tides, sorted chronologically.
-    Used for chart display where both peaks and troughs are needed.
+    Returns one prediction per hour, used for chart display.
     """
     station = station_id or settings.NOAA_STATION_ID
     now = datetime.now(timezone.utc)
@@ -85,7 +84,7 @@ async def fetch_all_tide_predictions(
         "end_date": end,
         "datum": "MLLW",
         "station": station,
-        "interval": "hilo",
+        "interval": "h",
         "units": "english",
         "time_zone": "lst_ldt",
         "format": "json",
@@ -106,17 +105,13 @@ async def fetch_all_tide_predictions(
 
     predictions = data.get("predictions", [])
 
-    all_tides = [
+    return [
         {
             "datetime": pred["t"],
             "height": float(pred["v"]),
-            "type": pred["type"],
         }
         for pred in predictions
-        if pred.get("type") in ("H", "L")
     ]
-
-    return all_tides
 
 
 async def get_king_tides(

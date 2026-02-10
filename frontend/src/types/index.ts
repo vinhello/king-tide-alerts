@@ -20,7 +20,7 @@ export interface SubscriberResponse {
 export interface TidePrediction {
   datetime: string;
   height: number;
-  type: string;
+  type?: string;
   is_king_tide: boolean;
 }
 

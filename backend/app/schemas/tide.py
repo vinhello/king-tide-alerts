@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class TidePrediction(BaseModel):
     datetime: str
     height: float
-    type: str
+    type: str = ""
     is_king_tide: bool
 
 
