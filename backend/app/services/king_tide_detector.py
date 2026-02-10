@@ -152,8 +152,8 @@ async def send_alerts(db: Session) -> None:
     for period in periods:
         days_until = (period.start_date - today).days
 
-        # 7-day alert: period starts in 5-8 days
-        if 5 <= days_until <= 8:
+        # 7-day alert: period starts in 6-7 days
+        if 6 <= days_until <= 7:
             # Check if ANY event in this period already had 7-day alert sent
             already_alerted = (
                 db.query(KingTideEvent)
@@ -180,8 +180,8 @@ async def send_alerts(db: Session) -> None:
                 )
                 seven_day_count += 1
 
-        # 48-hour alert: period starts in 1-3 days
-        if 1 <= days_until <= 3:
+        # 48-hour alert: period starts in 2 days
+        if days_until == 2:
             already_alerted = (
                 db.query(KingTideEvent)
                 .filter(
