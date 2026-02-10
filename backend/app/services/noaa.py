@@ -65,6 +65,60 @@ async def fetch_tide_predictions(
     return high_tides
 
 
+async def fetch_all_tide_predictions(
+    days_ahead: int = 30,
+    station_id: str | None = None,
+) -> list[dict]:
+    """Fetch all high/low tide predictions from NOAA CO-OPS API.
+
+    Returns both high (H) and low (L) tides, sorted chronologically.
+    Used for chart display where both peaks and troughs are needed.
+    """
+    station = station_id or settings.NOAA_STATION_ID
+    now = datetime.now(timezone.utc)
+    begin = now.strftime("%Y%m%d")
+    end = (now + timedelta(days=days_ahead)).strftime("%Y%m%d")
+
+    params = {
+        "product": "predictions",
+        "begin_date": begin,
+        "end_date": end,
+        "datum": "MLLW",
+        "station": station,
+        "interval": "hilo",
+        "units": "english",
+        "time_zone": "lst_ldt",
+        "format": "json",
+        "application": "king_tide_alerts",
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(NOAA_BASE_URL, params=params, timeout=30.0)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPError as e:
+            logger.error(f"NOAA API error: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error fetching NOAA data: {e}")
+            return []
+
+    predictions = data.get("predictions", [])
+
+    all_tides = [
+        {
+            "datetime": pred["t"],
+            "height": float(pred["v"]),
+            "type": pred["type"],
+        }
+        for pred in predictions
+        if pred.get("type") in ("H", "L")
+    ]
+
+    return all_tides
+
+
 async def get_king_tides(
     days_ahead: int = 30,
     threshold: float | None = None,

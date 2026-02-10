@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.services.noaa import fetch_tide_predictions, get_king_tides
+from app.services.noaa import fetch_all_tide_predictions, fetch_tide_predictions, get_king_tides
 
 
 @pytest.mark.asyncio
@@ -26,6 +26,30 @@ async def test_fetch_tide_predictions_parses_response(mock_noaa_response):
     assert all(t["type"] == "H" for t in result)
     assert result[0]["height"] == 6.8
     assert result[0]["datetime"] == "2026-02-10 01:41"
+
+
+@pytest.mark.asyncio
+async def test_fetch_all_tide_predictions_returns_highs_and_lows(mock_noaa_response):
+    """Should parse NOAA response and return both high and low tides."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = mock_noaa_response
+    mock_response.raise_for_status = MagicMock()
+
+    with patch("app.services.noaa.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.get.return_value = mock_response
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client_cls.return_value = mock_client
+
+        result = await fetch_all_tide_predictions(days_ahead=7)
+
+    assert len(result) == 7  # 5 high tides + 2 low tides
+    high_tides = [t for t in result if t["type"] == "H"]
+    low_tides = [t for t in result if t["type"] == "L"]
+    assert len(high_tides) == 5
+    assert len(low_tides) == 2
 
 
 @pytest.mark.asyncio

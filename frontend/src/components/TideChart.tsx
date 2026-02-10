@@ -33,7 +33,7 @@ export default function TideChart() {
         setData(
           response.predictions.map((p: TidePrediction, index: number) => ({
             date: p.datetime,
-            dateLabel: index % 4 === 0 ? new Date(p.datetime).toLocaleDateString("en-US", {
+            dateLabel: index % 8 === 0 ? new Date(p.datetime).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
             }) : "",
