@@ -27,6 +27,7 @@ export interface TidePrediction {
 export interface UpcomingTidesResponse {
   predictions: TidePrediction[];
   threshold: number;
+  king_tide_height: number;
   station_id: string;
 }
 

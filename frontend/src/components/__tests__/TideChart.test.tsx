@@ -42,6 +42,7 @@ describe("TideChart", () => {
         { datetime: "2026-02-10 14:23", height: 0.52, type: "H", is_king_tide: false },
       ],
       threshold: 1.0,
+      king_tide_height: 1.5,
       station_id: "9414290",
     });
 
@@ -60,13 +61,15 @@ describe("TideChart", () => {
         { datetime: "2026-02-10 01:41", height: 1.84, type: "H", is_king_tide: true },
       ],
       threshold: 1.0,
+      king_tide_height: 1.5,
       station_id: "9414290",
     });
 
     render(<TideChart />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("reference-line")).toBeInTheDocument();
+      const referenceLines = screen.getAllByTestId("reference-line");
+      expect(referenceLines).toHaveLength(2);
     });
   });
 });

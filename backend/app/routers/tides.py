@@ -23,5 +23,6 @@ async def upcoming_tides(days: int = Query(default=14, ge=1, le=30)):
     return UpcomingTidesResponse(
         predictions=tide_predictions,
         threshold=settings.KING_TIDE_THRESHOLD,
+        king_tide_height=settings.KING_TIDE_HEIGHT,
         station_id=settings.NOAA_STATION_ID,
     )

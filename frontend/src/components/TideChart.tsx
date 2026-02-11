@@ -38,6 +38,7 @@ function formatTooltipDate(timestamp: number): string {
 export default function TideChart() {
   const [data, setData] = useState<ChartDataPoint[]>([]);
   const [threshold, setThreshold] = useState(6.0);
+  const [kingTideHeight, setKingTideHeight] = useState(6.5);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -46,6 +47,7 @@ export default function TideChart() {
       try {
         const response = await getUpcomingTides(10);
         setThreshold(response.threshold);
+        setKingTideHeight(response.king_tide_height);
         setData(
           response.predictions.map((p: TidePrediction) => ({
             timestamp: new Date(p.datetime).getTime(),
@@ -137,9 +139,21 @@ export default function TideChart() {
               strokeDasharray="5 5"
               strokeWidth={2}
               label={{
-                value: `Alert Level (${threshold} ft)`,
+                value: `Flooding Risk (${threshold} ft)`,
                 position: 'right',
                 fill: '#FB923C',
+                fontSize: 10,
+              }}
+            />
+            <ReferenceLine
+              y={kingTideHeight}
+              stroke="#DC2626"
+              strokeDasharray="5 5"
+              strokeWidth={2}
+              label={{
+                value: `King Tide (${kingTideHeight} ft)`,
+                position: 'right',
+                fill: '#DC2626',
                 fontSize: 10,
               }}
             />
@@ -176,12 +190,12 @@ export default function TideChart() {
 
         <div className="mt-4 flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-[#0A7EA4]" />
-            <span>Normal</span>
+            <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
+            <span>Possible bike path flooding</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-[#FB923C]" />
-            <span>Alert Level</span>
+            <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #DC2626' }} />
+            <span>King tide</span>
           </div>
         </div>
       </div>

@@ -11,4 +11,5 @@ class TidePrediction(BaseModel):
 class UpcomingTidesResponse(BaseModel):
     predictions: list[TidePrediction]
     threshold: float
+    king_tide_height: float
     station_id: str
