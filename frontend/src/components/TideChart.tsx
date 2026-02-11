@@ -44,7 +44,7 @@ export default function TideChart() {
   useEffect(() => {
     async function fetchTides() {
       try {
-        const response = await getUpcomingTides(14);
+        const response = await getUpcomingTides(10);
         setThreshold(response.threshold);
         setData(
           response.predictions.map((p: TidePrediction) => ({
