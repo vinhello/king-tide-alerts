@@ -150,3 +150,7 @@ The project deploys as three Railway services:
 ## Data source
 
 Tide predictions come from the [NOAA CO-OPS API](https://tidesandcurrents.noaa.gov/api/) — free, public, no auth required. The station is Sausalito (`9414806`), using the MLLW datum so heights represent absolute feet above mean lower low water.
+
+## Acknowledgments
+
+This project was built with the help of [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding assistant.
