@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import stripe, subscribers, tides
+from app.routers import admin, stripe, subscribers, tides
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 logging.basicConfig(
@@ -39,6 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(admin.router)
 app.include_router(subscribers.router)
 app.include_router(tides.router)
 app.include_router(stripe.router)
