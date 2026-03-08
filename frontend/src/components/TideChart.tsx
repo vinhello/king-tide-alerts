@@ -9,6 +9,7 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
+import { CalendarDays } from "lucide-react";
 import type { TidePrediction } from "../types";
 import { getUpcomingTides } from "../services/api";
 
@@ -188,15 +189,25 @@ export default function TideChart() {
           </LineChart>
         </ResponsiveContainer>
 
-        <div className="mt-4 flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
-            <span>Possible bike path flooding</span>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
+              <span>Possible bike path flooding</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #DC2626' }} />
+              <span>King tide</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #DC2626' }} />
-            <span>King tide</span>
-          </div>
+          <a
+            href={`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/tides/calendar.ics`}
+            download="king-tide-alerts.ics"
+            className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+          >
+            <CalendarDays className="h-4 w-4" />
+            Add to Calendar
+          </a>
         </div>
       </div>
     </div>

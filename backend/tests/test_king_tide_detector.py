@@ -7,7 +7,6 @@ from app.models.king_tide_event import KingTideEvent
 from app.models.notification_sent import NotificationSent, NotificationType
 from app.models.subscriber import NotificationPreference, Subscriber
 from app.services.king_tide_detector import (
-    TidePeriod,
     _group_into_periods,
     detect_and_store_king_tides,
     send_alerts,
@@ -165,7 +164,9 @@ def test_group_empty_list():
 # --- send_alerts period-based tests ---
 
 
-def _create_subscriber(test_db, name="Test", email="test@example.com", token="token123"):
+def _create_subscriber(
+    test_db, name="Test", email="test@example.com", token="token123"
+):
     subscriber = Subscriber(
         name=name,
         email=email,
@@ -186,11 +187,13 @@ async def test_send_seven_day_alert_for_period(test_db):
     # Create 3 events on consecutive days, all 6 days away
     base = datetime.now(timezone.utc) + timedelta(days=6)
     for i in range(3):
-        test_db.add(KingTideEvent(
-            event_datetime=base + timedelta(days=i),
-            predicted_height=6.5 + i * 0.1,
-            station_id="9414806",
-        ))
+        test_db.add(
+            KingTideEvent(
+                event_datetime=base + timedelta(days=i),
+                predicted_height=6.5 + i * 0.1,
+                station_id="9414806",
+            )
+        )
     test_db.commit()
 
     with patch(
@@ -219,11 +222,13 @@ async def test_send_forty_eight_hour_alert_for_period(test_db):
 
     base = datetime.now(timezone.utc) + timedelta(days=2)
     for i in range(2):
-        test_db.add(KingTideEvent(
-            event_datetime=base + timedelta(days=i),
-            predicted_height=7.0 + i * 0.1,
-            station_id="9414806",
-        ))
+        test_db.add(
+            KingTideEvent(
+                event_datetime=base + timedelta(days=i),
+                predicted_height=7.0 + i * 0.1,
+                station_id="9414806",
+            )
+        )
     test_db.commit()
 
     with patch(
@@ -244,18 +249,22 @@ async def test_two_periods_get_separate_alerts(test_db):
 
     now = datetime.now(timezone.utc)
     # Period 1: 6 days away (7-day window)
-    test_db.add(KingTideEvent(
-        event_datetime=now + timedelta(days=6),
-        predicted_height=6.5,
-        station_id="9414806",
-    ))
+    test_db.add(
+        KingTideEvent(
+            event_datetime=now + timedelta(days=6),
+            predicted_height=6.5,
+            station_id="9414806",
+        )
+    )
     # Period 2: 7 days away but with a gap from period 1
     # (3-day gap from period 1 event)
-    test_db.add(KingTideEvent(
-        event_datetime=now + timedelta(days=6 + 3),
-        predicted_height=6.8,
-        station_id="9414806",
-    ))
+    test_db.add(
+        KingTideEvent(
+            event_datetime=now + timedelta(days=6 + 3),
+            predicted_height=6.8,
+            station_id="9414806",
+        )
+    )
     test_db.commit()
 
     with patch(
@@ -297,11 +306,13 @@ async def test_no_duplicate_period_alerts(test_db):
 async def test_no_alerts_without_subscribers(test_db):
     """Should skip alerts when there are no confirmed subscribers."""
     base = datetime.now(timezone.utc) + timedelta(days=6)
-    test_db.add(KingTideEvent(
-        event_datetime=base,
-        predicted_height=6.8,
-        station_id="9414806",
-    ))
+    test_db.add(
+        KingTideEvent(
+            event_datetime=base,
+            predicted_height=6.8,
+            station_id="9414806",
+        )
+    )
     test_db.commit()
 
     with patch(
@@ -319,21 +330,27 @@ async def test_alert_uses_peak_event_params(test_db):
     _create_subscriber(test_db)
 
     base = datetime.now(timezone.utc) + timedelta(days=6)
-    test_db.add(KingTideEvent(
-        event_datetime=base,
-        predicted_height=6.2,
-        station_id="9414806",
-    ))
-    test_db.add(KingTideEvent(
-        event_datetime=base + timedelta(days=1),
-        predicted_height=7.1,  # Peak
-        station_id="9414806",
-    ))
-    test_db.add(KingTideEvent(
-        event_datetime=base + timedelta(days=2),
-        predicted_height=6.5,
-        station_id="9414806",
-    ))
+    test_db.add(
+        KingTideEvent(
+            event_datetime=base,
+            predicted_height=6.2,
+            station_id="9414806",
+        )
+    )
+    test_db.add(
+        KingTideEvent(
+            event_datetime=base + timedelta(days=1),
+            predicted_height=7.1,  # Peak
+            station_id="9414806",
+        )
+    )
+    test_db.add(
+        KingTideEvent(
+            event_datetime=base + timedelta(days=2),
+            predicted_height=6.5,
+            station_id="9414806",
+        )
+    )
     test_db.commit()
 
     with patch(

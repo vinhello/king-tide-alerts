@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import SubscribeForm from "../components/SubscribeForm";
 import TideChart from "../components/TideChart";
+import CurrentTideStatus from "../components/CurrentTideStatus";
 
 const FAQ_ITEMS = [
   {
@@ -89,6 +90,11 @@ export default function Home() {
           {/* Subscribe Form Section */}
           <section className="py-8 sm:py-12">
             <SubscribeForm />
+          </section>
+
+          {/* Current Tide Status Section */}
+          <section className="py-4 sm:py-6">
+            <CurrentTideStatus />
           </section>
 
           {/* Tide Chart Section */}

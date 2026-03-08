@@ -2,6 +2,8 @@ import axios from "axios";
 import type {
   CheckoutSessionResponse,
   ConfirmResponse,
+  CurrentTideStatus,
+  HistoryResponse,
   SubscribeRequest,
   SubscriberResponse,
   UnsubscribeResponse,
@@ -49,5 +51,21 @@ export async function createCheckoutSession(): Promise<CheckoutSessionResponse> 
     "/api/stripe/create-checkout-session",
     { amount: 500 }
   );
+  return response.data;
+}
+
+export async function getEventHistory(
+  page: number = 1,
+  perPage: number = 50,
+  filter: "all" | "upcoming" | "past" = "all"
+): Promise<HistoryResponse> {
+  const response = await api.get<HistoryResponse>("/api/tides/history", {
+    params: { page, per_page: perPage, filter },
+  });
+  return response.data;
+}
+
+export async function getCurrentTideStatus(): Promise<CurrentTideStatus> {
+  const response = await api.get<CurrentTideStatus>("/api/tides/current");
   return response.data;
 }
