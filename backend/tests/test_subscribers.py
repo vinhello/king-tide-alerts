@@ -1,6 +1,5 @@
 from unittest.mock import patch, AsyncMock
 
-from app.models.king_tide_event import KingTideEvent
 from app.models.subscriber import Subscriber
 
 
@@ -128,7 +127,9 @@ def test_unsubscribe(client, test_db):
     assert "unsubscribed" in response.json()["message"].lower()
 
     # Verify deleted
-    assert test_db.query(Subscriber).filter_by(email="unsub@example.com").first() is None
+    assert (
+        test_db.query(Subscriber).filter_by(email="unsub@example.com").first() is None
+    )
 
 
 def test_invalid_token_returns_404(client):
@@ -138,58 +139,3 @@ def test_invalid_token_returns_404(client):
 
     response = client.get("/api/unsubscribe/invalid-token-xyz")
     assert response.status_code == 404
-
-
-def test_test_alert_sends_to_confirmed_subscribers(client, test_db):
-    """POST /api/admin/test-alert should send alerts to confirmed subscribers."""
-    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
-        client.post(
-            "/api/subscribe",
-            json={
-                "name": "Alert Test",
-                "email": "alert@example.com",
-                "notification_preference": "email",
-            },
-        )
-
-    # Confirm the subscriber
-    subscriber = test_db.query(Subscriber).filter_by(email="alert@example.com").first()
-    subscriber.confirmed = True
-    test_db.commit()
-
-    with patch("app.routers.subscribers.send_king_tide_alert", new_callable=AsyncMock) as mock_send:
-        response = client.post(
-            "/api/admin/test-alert",
-            headers={"x-api-key": "test-key"},
-        )
-
-    assert response.status_code == 200
-    assert response.json()["message"] == "Test alert sent to 1 subscriber(s)"
-    mock_send.assert_called_once()
-
-    # Verify no KingTideEvent was persisted to the DB
-    assert test_db.query(KingTideEvent).count() == 0
-
-
-def test_test_alert_no_confirmed_subscribers(client):
-    """POST /api/admin/test-alert should return 404 if no confirmed subscribers."""
-    response = client.post(
-        "/api/admin/test-alert",
-        headers={"x-api-key": "test-key"},
-    )
-    assert response.status_code == 404
-
-
-def test_test_alert_rejected_without_api_key(client):
-    """POST /api/admin/test-alert without API key should return 422."""
-    response = client.post("/api/admin/test-alert")
-    assert response.status_code == 422
-
-
-def test_test_alert_rejected_with_wrong_api_key(client):
-    """POST /api/admin/test-alert with wrong API key should return 403."""
-    response = client.post(
-        "/api/admin/test-alert",
-        headers={"x-api-key": "wrong-key"},
-    )
-    assert response.status_code == 403

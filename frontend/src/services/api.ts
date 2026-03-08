@@ -1,11 +1,16 @@
 import axios from "axios";
 import type {
+  AdminEvent,
   CheckoutSessionResponse,
   ConfirmResponse,
   CurrentTideStatus,
   HistoryResponse,
+  NotificationStats,
   SubscribeRequest,
   SubscriberResponse,
+  SubscriberStats,
+  SystemHealth,
+  TestAlertResponse,
   UnsubscribeResponse,
   UpcomingTidesResponse,
 } from "../types";
@@ -67,5 +72,42 @@ export async function getEventHistory(
 
 export async function getCurrentTideStatus(): Promise<CurrentTideStatus> {
   const response = await api.get<CurrentTideStatus>("/api/tides/current");
+  return response.data;
+}
+
+function adminHeaders(apiKey: string) {
+  return { headers: { "x-api-key": apiKey } };
+}
+
+export async function getAdminHealth(apiKey: string): Promise<SystemHealth> {
+  const response = await api.get<SystemHealth>("/api/admin/health", adminHeaders(apiKey));
+  return response.data;
+}
+
+export async function getSubscriberStats(apiKey: string): Promise<SubscriberStats> {
+  const response = await api.get<SubscriberStats>("/api/admin/stats", adminHeaders(apiKey));
+  return response.data;
+}
+
+export async function getNotificationStats(apiKey: string): Promise<NotificationStats> {
+  const response = await api.get<NotificationStats>("/api/admin/notifications", adminHeaders(apiKey));
+  return response.data;
+}
+
+export async function getAdminEvents(apiKey: string): Promise<AdminEvent[]> {
+  const response = await api.get<AdminEvent[]>("/api/admin/events", adminHeaders(apiKey));
+  return response.data;
+}
+
+export async function sendTestAlert(
+  apiKey: string,
+  height: number = 6.8,
+  daysUntil: number = 7
+): Promise<TestAlertResponse> {
+  const response = await api.post<TestAlertResponse>(
+    `/api/admin/test-alert?height=${height}&days_until=${daysUntil}`,
+    null,
+    adminHeaders(apiKey)
+  );
   return response.data;
 }
