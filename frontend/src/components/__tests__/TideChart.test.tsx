@@ -72,4 +72,24 @@ describe("TideChart", () => {
       expect(referenceLines).toHaveLength(2);
     });
   });
+
+  it("renders Add to Calendar link", async () => {
+    vi.mocked(getUpcomingTides).mockResolvedValueOnce({
+      predictions: [
+        { datetime: "2026-02-10 01:41", height: 1.84, type: "H", is_king_tide: true },
+      ],
+      threshold: 1.0,
+      king_tide_height: 1.5,
+      station_id: "9414290",
+    });
+
+    render(<TideChart />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/add to calendar/i)).toBeInTheDocument();
+    });
+
+    const link = screen.getByRole("link", { name: /add to calendar/i });
+    expect(link).toHaveAttribute("download", "king-tide-alerts.ics");
+  });
 });

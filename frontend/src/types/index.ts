@@ -42,3 +42,30 @@ export interface ConfirmResponse {
 export interface UnsubscribeResponse {
   message: string;
 }
+
+export interface HistoryEvent {
+  id: string;
+  event_datetime: string;
+  predicted_height: number;
+  is_king_tide: boolean;
+  seven_day_alert_sent: boolean;
+  forty_eight_hour_alert_sent: boolean;
+  notifications_sent: number;
+}
+
+export interface HistoryResponse {
+  events: HistoryEvent[];
+  total: number;
+  threshold: number;
+  king_tide_height: number;
+}
+
+export interface CurrentTideStatus {
+  current_height: number;
+  current_time: string;
+  next_high_tide_time: string | null;
+  next_high_tide_height: number | null;
+  hours_until_high_tide: number | null;
+  status: "safe" | "caution" | "flooded";
+  threshold: number;
+}

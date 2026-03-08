@@ -35,6 +35,8 @@ async def create_checkout_session(data: CheckoutSessionRequest):
             success_url=f"{settings.APP_URL}/thanks",
             cancel_url=settings.APP_URL,
         )
+        if not session.url:
+            raise HTTPException(status_code=500, detail="Failed to create checkout URL")
         return CheckoutSessionResponse(checkout_url=session.url)
     except stripe.StripeError as e:
         logger.error(f"Stripe error: {e}")
