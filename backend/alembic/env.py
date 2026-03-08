@@ -1,8 +1,12 @@
 import os
+import sys
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+# Ensure the backend directory is on sys.path so `app` is importable
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.database import Base
 from app.models import Subscriber, KingTideEvent, NotificationSent  # noqa: F401
