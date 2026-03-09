@@ -8,8 +8,7 @@ from app.config import settings
 from app.database import Base, get_db
 from app.main import app
 
-# Set admin API key for tests
-settings.ADMIN_API_KEY = "test-key"
+# Set admin password for tests
 settings.ADMIN_PASSWORD = "test-password"
 
 
