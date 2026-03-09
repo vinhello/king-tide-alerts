@@ -75,8 +75,8 @@ export async function getCurrentTideStatus(): Promise<CurrentTideStatus> {
   return response.data;
 }
 
-function adminHeaders(apiKey: string) {
-  return { headers: { "x-api-key": apiKey } };
+function adminHeaders(password: string) {
+  return { headers: { "x-admin-password": password } };
 }
 
 export async function getAdminHealth(apiKey: string): Promise<SystemHealth> {

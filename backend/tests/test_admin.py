@@ -26,7 +26,7 @@ def test_health_returns_status(client):
         mock_scheduler.running = False
         response = client.get(
             "/api/admin/health",
-            headers={"x-api-key": "test-key"},
+            headers={"x-admin-password": "test-password"},
         )
 
     assert response.status_code == 200
@@ -45,7 +45,7 @@ def test_health_rejected_wrong_key(client):
     """GET /api/admin/health with wrong API key should return 403."""
     response = client.get(
         "/api/admin/health",
-        headers={"x-api-key": "wrong-key"},
+        headers={"x-admin-password": "wrong-password"},
     )
     assert response.status_code == 403
 
@@ -54,7 +54,7 @@ def test_stats_empty(client):
     """GET /api/admin/stats with no subscribers should return zeros."""
     response = client.get(
         "/api/admin/stats",
-        headers={"x-api-key": "test-key"},
+        headers={"x-admin-password": "test-password"},
     )
 
     assert response.status_code == 200
@@ -82,7 +82,7 @@ def test_stats_with_data(client, test_db):
 
     response = client.get(
         "/api/admin/stats",
-        headers={"x-api-key": "test-key"},
+        headers={"x-admin-password": "test-password"},
     )
 
     assert response.status_code == 200
@@ -98,7 +98,7 @@ def test_notifications_empty(client):
     """GET /api/admin/notifications with no data should return zeros."""
     response = client.get(
         "/api/admin/notifications",
-        headers={"x-api-key": "test-key"},
+        headers={"x-admin-password": "test-password"},
     )
 
     assert response.status_code == 200
@@ -120,7 +120,7 @@ def test_notifications_with_data(client, test_db):
 
     response = client.get(
         "/api/admin/notifications",
-        headers={"x-api-key": "test-key"},
+        headers={"x-admin-password": "test-password"},
     )
 
     assert response.status_code == 200
@@ -148,7 +148,7 @@ def test_events_upcoming(client, test_db):
 
     response = client.get(
         "/api/admin/events",
-        headers={"x-api-key": "test-key"},
+        headers={"x-admin-password": "test-password"},
     )
 
     assert response.status_code == 200
@@ -166,7 +166,7 @@ def test_test_alert_sends(client, test_db):
     ) as mock_send:
         response = client.post(
             "/api/admin/test-alert",
-            headers={"x-api-key": "test-key"},
+            headers={"x-admin-password": "test-password"},
         )
 
     assert response.status_code == 200
@@ -181,7 +181,7 @@ def test_test_alert_no_subscribers(client):
     """POST /api/admin/test-alert should return 404 if no confirmed subscribers."""
     response = client.post(
         "/api/admin/test-alert",
-        headers={"x-api-key": "test-key"},
+        headers={"x-admin-password": "test-password"},
     )
     assert response.status_code == 404
 
@@ -190,6 +190,6 @@ def test_test_alert_wrong_key(client):
     """POST /api/admin/test-alert with wrong API key should return 403."""
     response = client.post(
         "/api/admin/test-alert",
-        headers={"x-api-key": "wrong-key"},
+        headers={"x-admin-password": "wrong-password"},
     )
     assert response.status_code == 403

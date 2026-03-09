@@ -35,7 +35,7 @@ import type {
   AdminEvent,
 } from "../types";
 
-const SESSION_KEY = "adminApiKey";
+const SESSION_KEY = "adminPassword";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -131,17 +131,17 @@ function LoginForm({ onLogin, loginError, loginLoading }: LoginFormProps) {
         <form onSubmit={handleSubmit} noValidate>
           <div className="mb-4">
             <label
-              htmlFor="admin-api-key"
+              htmlFor="admin-password"
               className="block text-sm font-medium text-foreground mb-1"
             >
-              API Key
+              Password
             </label>
             <input
-              id="admin-api-key"
+              id="admin-password"
               type="password"
               value={inputKey}
               onChange={(e) => setInputKey(e.target.value)}
-              placeholder="Enter admin API key"
+              placeholder="Enter admin password"
               required
               autoComplete="current-password"
               className="w-full px-3 py-2 rounded-md border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -708,7 +708,7 @@ export default function Admin() {
       setApiKey(key);
       setAuthenticated(true);
     } catch {
-      setLoginError("Invalid API key. Please try again.");
+      setLoginError("Invalid password. Please try again.");
       sessionStorage.removeItem(SESSION_KEY);
     } finally {
       setLoginLoading(false);
