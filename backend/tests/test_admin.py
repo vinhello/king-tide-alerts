@@ -36,9 +36,9 @@ def test_health_returns_status(client):
 
 
 def test_health_rejected_without_key(client):
-    """GET /api/admin/health without API key should return 422."""
+    """GET /api/admin/health without password should return 401."""
     response = client.get("/api/admin/health")
-    assert response.status_code == 422
+    assert response.status_code == 401
 
 
 def test_health_rejected_wrong_key(client):
@@ -193,3 +193,39 @@ def test_test_alert_wrong_key(client):
         headers={"x-admin-password": "wrong-password"},
     )
     assert response.status_code == 403
+
+
+def test_test_alert_height_too_low(client):
+    """POST /api/admin/test-alert with height below minimum should return 422."""
+    response = client.post(
+        "/api/admin/test-alert?height=4.0",
+        headers={"x-admin-password": "test-password"},
+    )
+    assert response.status_code == 422
+
+
+def test_test_alert_height_too_high(client):
+    """POST /api/admin/test-alert with height above maximum should return 422."""
+    response = client.post(
+        "/api/admin/test-alert?height=25.0",
+        headers={"x-admin-password": "test-password"},
+    )
+    assert response.status_code == 422
+
+
+def test_test_alert_days_until_too_low(client):
+    """POST /api/admin/test-alert with days_until below minimum should return 422."""
+    response = client.post(
+        "/api/admin/test-alert?days_until=0",
+        headers={"x-admin-password": "test-password"},
+    )
+    assert response.status_code == 422
+
+
+def test_test_alert_days_until_too_high(client):
+    """POST /api/admin/test-alert with days_until above maximum should return 422."""
+    response = client.post(
+        "/api/admin/test-alert?days_until=31",
+        headers={"x-admin-password": "test-password"},
+    )
+    assert response.status_code == 422

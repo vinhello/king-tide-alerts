@@ -1,6 +1,7 @@
+import hmac
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -19,6 +20,7 @@ from app.schemas.admin import (
     SystemHealth,
     TestAlertResponse,
 )
+from app.rate_limit import limiter
 from app.services.notification import send_king_tide_alert
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -26,20 +28,20 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 def verify_admin_auth(
     x_admin_password: str | None = Header(None),
-    x_api_key: str | None = Header(None),
 ) -> str:
-    credential = x_admin_password or x_api_key
-    if not credential:
-        raise HTTPException(status_code=422, detail="Missing authentication header")
-    if settings.ADMIN_PASSWORD and credential == settings.ADMIN_PASSWORD:
-        return credential
-    if settings.ADMIN_API_KEY and credential == settings.ADMIN_API_KEY:
-        return credential
+    if not x_admin_password:
+        raise HTTPException(status_code=401, detail="Missing authentication header")
+    if settings.ADMIN_PASSWORD and hmac.compare_digest(
+        x_admin_password, settings.ADMIN_PASSWORD
+    ):
+        return x_admin_password
     raise HTTPException(status_code=403, detail="Invalid credentials")
 
 
 @router.get("/health", response_model=SystemHealth)
+@limiter.limit("10/minute")
 async def admin_health(
+    request: Request,
     _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
@@ -65,7 +67,9 @@ async def admin_health(
 
 
 @router.get("/stats", response_model=SubscriberStats)
+@limiter.limit("10/minute")
 async def subscriber_stats(
+    request: Request,
     _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
@@ -113,7 +117,9 @@ async def subscriber_stats(
 
 
 @router.get("/notifications", response_model=NotificationStats)
+@limiter.limit("10/minute")
 async def notification_stats(
+    request: Request,
     _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
@@ -181,7 +187,9 @@ async def notification_stats(
 
 
 @router.get("/events", response_model=list[AdminEvent])
+@limiter.limit("10/minute")
 async def upcoming_events(
+    request: Request,
     _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
@@ -206,9 +214,11 @@ async def upcoming_events(
 
 
 @router.post("/test-alert", response_model=TestAlertResponse)
+@limiter.limit("2/minute")
 async def test_alert(
-    height: float = 6.8,
-    days_until: int = 7,
+    request: Request,
+    height: float = Query(default=6.8, ge=5.0, le=20.0),
+    days_until: int = Query(default=7, ge=1, le=30),
     _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
