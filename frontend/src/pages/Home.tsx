@@ -1,4 +1,5 @@
-import { Waves, TrendingUp, AlertTriangle, HelpCircle } from "lucide-react";
+import { useState } from "react";
+import { Waves, TrendingUp, AlertTriangle, HelpCircle, ChevronDown } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import SubscribeForm from "../components/SubscribeForm";
@@ -44,12 +45,14 @@ const FAQ_ITEMS = [
 ];
 
 export default function Home() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1">
-        {/* Hero Section */}
+        {/* Hero Section — compact with integrated subscribe form */}
         <section className="relative w-full bg-gradient-to-br from-[#0A7EA4] via-[#0D9488] to-[#0EA5E9] text-white overflow-hidden">
           {/* Wave pattern background */}
           <div className="absolute inset-0 opacity-10">
@@ -72,114 +75,135 @@ export default function Home() {
             </svg>
           </div>
 
-          <div className="relative mx-auto max-w-[720px] px-4 py-12 sm:py-16 md:py-24">
-            <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
-              <Waves className="h-12 w-12 sm:h-16 sm:w-16 mb-2" />
-              <h1 className="text-3xl sm:text-4xl md:text-5xl leading-tight">
+          <div className="relative mx-auto max-w-[720px] px-4 py-6 sm:py-8">
+            <div className="flex items-center gap-3 mb-2">
+              <Waves className="h-8 w-8 sm:h-10 sm:w-10 shrink-0" />
+              <h1 className="text-2xl sm:text-3xl md:text-4xl leading-tight">
                 King Tide Alert
               </h1>
-              <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl leading-relaxed">
-                Get notified before high tides flood the Bay Trail bike path through Sausalito, California.
-                Free alerts sent 7 days and 48 hours before flooding events.
-              </p>
             </div>
+            <p className="text-sm sm:text-base text-white/90 max-w-xl leading-relaxed mb-6">
+              Get notified before high tides flood the Bay Trail bike path through Sausalito, California.
+              Free alerts sent 7 days and 48 hours before flooding events.
+            </p>
+            <SubscribeForm compact />
           </div>
         </section>
 
-        <div className="mx-auto max-w-[720px] px-4">
-          {/* Subscribe Form Section */}
-          <section className="py-8 sm:py-12">
-            <SubscribeForm />
-          </section>
-
-          {/* Current Tide Status Section */}
-          <section className="py-4 sm:py-6">
+        {/* Current Tide Status — promoted to first position */}
+        <section id="status" className="bg-background">
+          <div className="mx-auto max-w-[720px] px-4 -mt-4 relative z-10 pb-6 sm:pb-8">
             <CurrentTideStatus />
-          </section>
+          </div>
+        </section>
 
-          {/* Tide Chart Section */}
-          <section className="py-8 sm:py-12">
+        {/* Tide Chart — muted background band */}
+        <section id="tides" className="bg-muted">
+          <div className="mx-auto max-w-[720px] px-4 py-8 sm:py-12">
             <TideChart />
-          </section>
+          </div>
+        </section>
 
-          {/* King Tides & the Bay Trail Section */}
-          <section className="py-8 sm:py-12">
+        {/* About King Tides & Flooding — merged section */}
+        <section className="bg-background">
+          <div className="mx-auto max-w-[720px] px-4 py-8 sm:py-12">
             <div className="flex flex-col items-center text-center mb-6">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                 <TrendingUp className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-xl sm:text-2xl">King Tides & the Bay Trail</h2>
+              <h2 className="text-xl sm:text-2xl">About King Tides & Flooding</h2>
             </div>
-            <div className="bg-card rounded-lg border border-border p-6 sm:p-8 space-y-4">
-              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                King tides are the highest tides of the year, caused by the alignment of the sun, moon,
-                and Earth. In the Bay Area they typically occur from November through February, pushing
-                water levels high enough to overtop low-lying sections of the Bay Trail near Sausalito.
-              </p>
-              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                The Mill Valley–Sausalito Multiuse Path runs along Richardson Bay and is popular with
-                bike commuters heading to the Golden Gate Bridge and ferry. Sections near Bothin Marsh,
-                the Sausalito Boardwalk, and Dunphy Park sit close to sea level and are the first to
-                flood. We send alerts at <strong>6.0 ft MLLW</strong> (flooding threshold) and flag
-                tides at <strong>6.5 ft+</strong> as king tides.
-              </p>
-              <div className="bg-muted rounded-lg p-4 sm:p-5 space-y-2">
-                <p className="text-sm font-medium text-foreground">Key facts:</p>
-                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>Completely predictable—they happen every year on a known schedule</li>
-                  <li>Driven by astronomical cycles, not weather</li>
-                  <li>Considered a preview of future daily sea levels due to climate change</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* Flooding Information Section */}
-          <section className="py-8 sm:py-12">
-            <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-3">
-                <AlertTriangle className="h-6 w-6 text-accent" />
-              </div>
-              <h2 className="text-xl sm:text-2xl">When Flooding Happens</h2>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-6 sm:p-8 space-y-4">
-              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                When tides exceed 6.0 feet, water overtops the path in low-lying sections. Flooding
-                typically lasts ~4 hours around the peak (2 hours before and after), with depths
-                ranging from inches to knee-deep during the most extreme events. The Bridgeway
-                Boulevard sidewalk works as an alternate route, or you can time your ride outside
-                the flooding window using the peak time in our alerts.
-              </p>
-              <div className="border-l-4 border-accent bg-accent/5 rounded-r-lg p-4">
-                <p className="text-sm font-medium text-foreground mb-1">Important</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Flooding estimates are based on NOAA predictions and may vary due to storms, wind,
-                  and pressure changes. Always check current conditions before heading out.
+            <div className="bg-card rounded-lg border border-border p-6 sm:p-8 space-y-6">
+              {/* King Tides subsection */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">King Tides & the Bay Trail</h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  King tides are the highest tides of the year, caused by the alignment of the sun, moon,
+                  and Earth. In the Bay Area they typically occur from November through February, pushing
+                  water levels high enough to overtop low-lying sections of the Bay Trail near Sausalito.
+                </p>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  The Mill Valley–Sausalito Multiuse Path runs along Richardson Bay and is popular with
+                  bike commuters heading to the Golden Gate Bridge and ferry. Sections near Bothin Marsh,
+                  the Sausalito Boardwalk, and Dunphy Park sit close to sea level and are the first to
+                  flood. We send alerts at <strong>6.0 ft MLLW</strong> (flooding threshold) and flag
+                  tides at <strong>6.5 ft+</strong> as king tides.
                 </p>
               </div>
-            </div>
-          </section>
 
-          {/* FAQ Section */}
-          <section className="py-8 sm:py-12">
+              <hr className="border-border" />
+
+              {/* Flooding subsection */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-accent" />
+                  When Flooding Happens
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  When tides exceed 6.0 feet, water overtops the path in low-lying sections. Flooding
+                  typically lasts ~4 hours around the peak (2 hours before and after), with depths
+                  ranging from inches to knee-deep during the most extreme events. The Bridgeway
+                  Boulevard sidewalk works as an alternate route, or you can time your ride outside
+                  the flooding window using the peak time in our alerts.
+                </p>
+              </div>
+
+              {/* Side-by-side callouts */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="bg-muted rounded-lg p-4 sm:p-5 space-y-2">
+                  <p className="text-sm font-medium text-foreground">Key facts:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Completely predictable—they happen every year on a known schedule</li>
+                    <li>Driven by astronomical cycles, not weather</li>
+                    <li>Considered a preview of future daily sea levels due to climate change</li>
+                  </ul>
+                </div>
+                <div className="border-l-4 border-accent bg-accent/5 rounded-r-lg p-4">
+                  <p className="text-sm font-medium text-foreground mb-1">Important</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Flooding estimates are based on NOAA predictions and may vary due to storms, wind,
+                    and pressure changes. Always check current conditions before heading out.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section — collapsible accordion, muted background */}
+        <section id="faq" className="bg-muted">
+          <div className="mx-auto max-w-[720px] px-4 py-8 sm:py-12">
             <div className="flex flex-col items-center text-center mb-6">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                 <HelpCircle className="h-6 w-6 text-primary" />
               </div>
               <h2 className="text-xl sm:text-2xl">Frequently Asked Questions</h2>
             </div>
-            <div className="bg-card rounded-lg border border-border p-6 sm:p-8">
-              <div className="divide-y divide-border">
-                {FAQ_ITEMS.map((item, index) => (
-                  <div key={index} className={index === 0 ? "pb-5" : index === FAQ_ITEMS.length - 1 ? "pt-5" : "py-5"}>
-                    <h3 className="text-base font-medium mb-2">{item.question}</h3>
-                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{item.answer}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="bg-card rounded-lg border border-border">
+              {FAQ_ITEMS.map((item, index) => (
+                <div key={index} className={index < FAQ_ITEMS.length - 1 ? "border-b border-border" : ""}>
+                  <button
+                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                    aria-expanded={openFaq === index}
+                    className="w-full flex items-center justify-between text-left p-4 sm:p-5 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-base font-medium pr-4">{item.question}</span>
+                    <ChevronDown
+                      className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                        openFaq === index ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {openFaq === index && (
+                    <div className="px-4 sm:px-5 pb-4 sm:pb-5">
+                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{item.answer}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
       </main>
 
       <Footer />

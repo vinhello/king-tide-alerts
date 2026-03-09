@@ -9,7 +9,11 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Checkbox } from "./ui/checkbox";
 
-export default function SubscribeForm() {
+interface SubscribeFormProps {
+  compact?: boolean;
+}
+
+export default function SubscribeForm({ compact = false }: SubscribeFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -56,11 +60,14 @@ export default function SubscribeForm() {
 
   if (status === "success") {
     return (
-      <div className="w-full bg-card rounded-lg border border-border p-6 sm:p-8">
+      <div className={compact
+        ? "bg-white/10 backdrop-blur-sm rounded-lg p-4"
+        : "w-full bg-card rounded-lg border border-border p-6 sm:p-8"
+      }>
         <div className="flex flex-col items-center text-center gap-4">
-          <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-secondary" />
-          <h3 className="text-lg sm:text-xl">Check your inbox!</h3>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <CheckCircle className={`h-10 w-10 sm:h-12 sm:w-12 ${compact ? "text-white" : "text-secondary"}`} />
+          <h3 className={`text-lg sm:text-xl ${compact ? "text-white" : ""}`}>Check your inbox!</h3>
+          <p className={`text-sm sm:text-base ${compact ? "text-white/80" : "text-muted-foreground"}`}>
             We sent a confirmation {showEmail ? "email" : "message"}. Click the link to activate your alerts.
           </p>
         </div>
@@ -69,13 +76,16 @@ export default function SubscribeForm() {
   }
 
   return (
-    <div className="w-full bg-card rounded-lg border border-border p-4 sm:p-6">
-      <h2 className="text-xl sm:text-2xl mb-4 sm:mb-6">Get Alerts</h2>
+    <div className={compact
+      ? "bg-white/10 backdrop-blur-sm rounded-lg p-4"
+      : "w-full bg-card rounded-lg border border-border p-4 sm:p-6"
+    }>
+      {!compact && <h2 className="text-xl sm:text-2xl mb-4 sm:mb-6">Get Alerts</h2>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name Field */}
         <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
+          <Label htmlFor="name" className={compact ? "text-white/90" : ""}>Name *</Label>
           <Input
             id="name"
             type="text"
@@ -83,17 +93,18 @@ export default function SubscribeForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            className={compact ? "bg-white/20 border-white/30 text-white placeholder:text-white/50" : ""}
           />
         </div>
 
         {/* Notification Preference */}
         <div className="space-y-2">
-          <Label htmlFor="preference">Notify me via *</Label>
+          <Label htmlFor="preference" className={compact ? "text-white/90" : ""}>Notify me via *</Label>
           <Select
             value={preference}
             onValueChange={(value: NotificationPreference) => setPreference(value)}
           >
-            <SelectTrigger id="preference">
+            <SelectTrigger id="preference" className={compact ? "bg-white/20 border-white/30 text-white" : ""}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -111,7 +122,7 @@ export default function SubscribeForm() {
         {/* Email Field */}
         {showEmail && (
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email" className={compact ? "text-white/90" : ""}>Email *</Label>
             <Input
               id="email"
               type="email"
@@ -119,6 +130,7 @@ export default function SubscribeForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className={compact ? "bg-white/20 border-white/30 text-white placeholder:text-white/50" : ""}
             />
           </div>
         )}
@@ -126,7 +138,7 @@ export default function SubscribeForm() {
         {/* Phone Field */}
         {showPhone && (
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone *</Label>
+            <Label htmlFor="phone" className={compact ? "text-white/90" : ""}>Phone *</Label>
             <Input
               id="phone"
               type="tel"
@@ -134,6 +146,7 @@ export default function SubscribeForm() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
+              className={compact ? "bg-white/20 border-white/30 text-white placeholder:text-white/50" : ""}
             />
           </div>
         )}
@@ -149,15 +162,15 @@ export default function SubscribeForm() {
             />
             <label
               htmlFor="sms-consent"
-              className="text-sm text-muted-foreground leading-snug cursor-pointer"
+              className={`text-sm leading-snug cursor-pointer ${compact ? "text-white/80" : "text-muted-foreground"}`}
             >
               I agree to receive SMS alerts and understand that message and data rates may apply.
               I can opt out at any time by texting STOP. See our{" "}
-              <Link to="/terms-and-conditions" className="text-primary hover:underline">
+              <Link to="/terms-and-conditions" className={compact ? "text-white underline" : "text-primary hover:underline"}>
                 Terms
               </Link>{" "}
               and{" "}
-              <Link to="/privacy-policy" className="text-primary hover:underline">
+              <Link to="/privacy-policy" className={compact ? "text-white underline" : "text-primary hover:underline"}>
                 Privacy Policy
               </Link>
               .
@@ -167,7 +180,10 @@ export default function SubscribeForm() {
 
         {/* Error Message */}
         {status === "error" && (
-          <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+          <div className={compact
+            ? "text-sm text-white bg-white/10 rounded-md p-3"
+            : "text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3"
+          }>
             {errorMessage}
           </div>
         )}
@@ -176,7 +192,7 @@ export default function SubscribeForm() {
         <Button
           type="submit"
           disabled={status === "loading"}
-          className="w-full"
+          className={`w-full ${compact ? "bg-white text-[#0A7EA4] hover:bg-white/90" : ""}`}
         >
           {status === "loading" ? (
             <>
