@@ -75,7 +75,7 @@ export default function Home() {
             </svg>
           </div>
 
-          <div className="relative mx-auto max-w-[720px] px-4 py-6 sm:py-8">
+          <div className="relative mx-auto max-w-[720px] px-4 py-6 pb-12 sm:py-8 sm:pb-14">
             <div className="flex items-center gap-3 mb-2">
               <Waves className="h-8 w-8 sm:h-10 sm:w-10 shrink-0" />
               <h1 className="text-2xl sm:text-3xl md:text-4xl leading-tight">
@@ -92,7 +92,7 @@ export default function Home() {
 
         {/* Current Tide Status — promoted to first position */}
         <section id="status" className="bg-background">
-          <div className="mx-auto max-w-[720px] px-4 -mt-4 relative z-10 pb-6 sm:pb-8">
+          <div className="mx-auto max-w-[720px] px-4 -mt-10 sm:-mt-12 relative z-10 pb-6 sm:pb-8">
             <CurrentTideStatus />
           </div>
         </section>
