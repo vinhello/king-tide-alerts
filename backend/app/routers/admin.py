@@ -24,15 +24,23 @@ from app.services.notification import send_king_tide_alert
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
-def verify_admin_key(x_api_key: str = Header(...)) -> str:
-    if not settings.ADMIN_API_KEY or x_api_key != settings.ADMIN_API_KEY:
-        raise HTTPException(status_code=403, detail="Invalid API key")
-    return x_api_key
+def verify_admin_auth(
+    x_admin_password: str | None = Header(None),
+    x_api_key: str | None = Header(None),
+) -> str:
+    credential = x_admin_password or x_api_key
+    if not credential:
+        raise HTTPException(status_code=422, detail="Missing authentication header")
+    if settings.ADMIN_PASSWORD and credential == settings.ADMIN_PASSWORD:
+        return credential
+    if settings.ADMIN_API_KEY and credential == settings.ADMIN_API_KEY:
+        return credential
+    raise HTTPException(status_code=403, detail="Invalid credentials")
 
 
 @router.get("/health", response_model=SystemHealth)
 async def admin_health(
-    _key: str = Depends(verify_admin_key),
+    _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
     from app.services.scheduler import scheduler
@@ -58,7 +66,7 @@ async def admin_health(
 
 @router.get("/stats", response_model=SubscriberStats)
 async def subscriber_stats(
-    _key: str = Depends(verify_admin_key),
+    _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
     total = db.query(Subscriber).count()
@@ -106,7 +114,7 @@ async def subscriber_stats(
 
 @router.get("/notifications", response_model=NotificationStats)
 async def notification_stats(
-    _key: str = Depends(verify_admin_key),
+    _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
     total_sent = db.query(NotificationSent).count()
@@ -174,7 +182,7 @@ async def notification_stats(
 
 @router.get("/events", response_model=list[AdminEvent])
 async def upcoming_events(
-    _key: str = Depends(verify_admin_key),
+    _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
     now = datetime.now(timezone.utc)
@@ -201,7 +209,7 @@ async def upcoming_events(
 async def test_alert(
     height: float = 6.8,
     days_until: int = 7,
-    _key: str = Depends(verify_admin_key),
+    _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
     """Send a test alert to all confirmed subscribers.

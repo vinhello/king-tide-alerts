@@ -10,6 +10,7 @@ from app.main import app
 
 # Set admin API key for tests
 settings.ADMIN_API_KEY = "test-key"
+settings.ADMIN_PASSWORD = "test-password"
 
 
 # Use SQLite in-memory for tests

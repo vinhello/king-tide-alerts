@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     KING_TIDE_THRESHOLD: float = 6.0
     KING_TIDE_HEIGHT: float = 6.5
     ADMIN_API_KEY: str = ""
+    ADMIN_PASSWORD: str = ""
     ENVIRONMENT: str = "development"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
