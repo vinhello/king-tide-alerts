@@ -43,7 +43,7 @@ export default function CurrentTideStatus() {
 
   if (loading) {
     return (
-      <div className="bg-card rounded-lg border border-border p-4 sm:p-6 flex items-center justify-center">
+      <div className="bg-card rounded-lg border border-border border-l-4 border-l-primary shadow-sm p-4 sm:p-6 flex items-center justify-center">
         <Loader2
           className="h-5 w-5 animate-spin text-muted-foreground"
           aria-label="Loading current tide status"
@@ -59,7 +59,7 @@ export default function CurrentTideStatus() {
   const colorClass = statusColorClass(data.status);
 
   return (
-    <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
+    <div className="bg-card rounded-lg border border-border border-l-4 border-l-primary shadow-sm p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
         {/* Current height */}
         <div className="flex items-center gap-3">

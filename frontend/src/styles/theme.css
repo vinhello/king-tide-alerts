@@ -95,6 +95,8 @@
 
   html {
     font-size: var(--font-size);
+    scroll-behavior: smooth;
+    scroll-padding-top: 4rem;
   }
 
   h1 {

@@ -18,7 +18,11 @@ function formatEventDate(datetime: string): string {
   });
 }
 
-function heightColorClass(height: number, kingTideHeight: number, threshold: number): string {
+function heightColorClass(
+  height: number,
+  kingTideHeight: number,
+  threshold: number,
+): string {
   if (height >= kingTideHeight) return "text-destructive";
   if (height >= threshold) return "text-accent";
   return "text-muted-foreground";
@@ -31,7 +35,11 @@ interface EventCardProps {
 }
 
 function EventCard({ event, threshold, kingTideHeight }: EventCardProps) {
-  const heightClass = heightColorClass(event.predicted_height, kingTideHeight, threshold);
+  const heightClass = heightColorClass(
+    event.predicted_height,
+    kingTideHeight,
+    threshold,
+  );
 
   return (
     <div className="bg-card rounded-lg border border-border p-4 sm:p-5">
@@ -41,6 +49,11 @@ function EventCard({ event, threshold, kingTideHeight }: EventCardProps) {
             <span className="text-sm font-medium text-foreground">
               {formatEventDate(event.event_datetime)}
             </span>
+            {new Date(event.event_datetime) > new Date() && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                Upcoming
+              </span>
+            )}
             {event.is_king_tide && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
                 King Tide
@@ -56,21 +69,32 @@ function EventCard({ event, threshold, kingTideHeight }: EventCardProps) {
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">7-day alert:</span>
             {event.seven_day_alert_sent ? (
-              <CheckCircle className="h-4 w-4 text-secondary" aria-label="Sent" />
+              <CheckCircle
+                className="h-4 w-4 text-secondary"
+                aria-label="Sent"
+              />
             ) : (
-              <span className="text-muted-foreground" aria-label="Not sent">—</span>
+              <span className="text-muted-foreground" aria-label="Not sent">
+                —
+              </span>
             )}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">48-hour alert:</span>
             {event.forty_eight_hour_alert_sent ? (
-              <CheckCircle className="h-4 w-4 text-secondary" aria-label="Sent" />
+              <CheckCircle
+                className="h-4 w-4 text-secondary"
+                aria-label="Sent"
+              />
             ) : (
-              <span className="text-muted-foreground" aria-label="Not sent">—</span>
+              <span className="text-muted-foreground" aria-label="Not sent">
+                —
+              </span>
             )}
           </div>
           <div className="text-muted-foreground">
-            {event.notifications_sent} notification{event.notifications_sent !== 1 ? "s" : ""} sent
+            {event.notifications_sent} notification
+            {event.notifications_sent !== 1 ? "s" : ""} sent
           </div>
         </div>
       </div>
@@ -145,7 +169,11 @@ export default function History() {
           </div>
 
           {/* Filter buttons */}
-          <div className="flex items-center gap-2 mb-6" role="group" aria-label="Filter events">
+          <div
+            className="flex items-center gap-2 mb-6"
+            role="group"
+            aria-label="Filter events"
+          >
             {filterButtons.map(({ label, value }) => (
               <button
                 key={value}
@@ -165,12 +193,17 @@ export default function History() {
           {/* Content */}
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-label="Loading" />
+              <Loader2
+                className="h-8 w-8 animate-spin text-muted-foreground"
+                aria-label="Loading"
+              />
             </div>
           ) : error ? (
             <p className="text-destructive text-center py-8">{error}</p>
           ) : data && data.events.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No tide events recorded yet.</p>
+            <p className="text-muted-foreground text-center py-8">
+              No tide events recorded yet.
+            </p>
           ) : (
             <>
               <div className="flex flex-col gap-3">
