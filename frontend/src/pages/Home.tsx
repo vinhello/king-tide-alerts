@@ -130,9 +130,12 @@ export default function Home() {
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">King Tides & the Bay Trail</h3>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  King tides are the highest tides of the year, caused by the alignment of the sun, moon,
-                  and Earth. In the Bay Area they typically occur from November through February, pushing
-                  water levels high enough to overtop low-lying sections of the Bay Trail near Sausalito.
+                  "King tide" isn't a scientific term, but is commonly used to describe tides that are
+                  significantly higher than normal, caused by the alignment of the sun, moon, and Earth.
+                  What constitutes a king tide varies by region — in the Bay Area, that's typically
+                  around <strong>6.5 ft+</strong> MLLW. They usually occur from November through February,
+                  pushing water levels high enough to overtop low-lying sections of the Bay Trail near
+                  Sausalito.
                 </p>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   The Mill Valley–Sausalito Multiuse Path runs along Richardson Bay and is popular with
