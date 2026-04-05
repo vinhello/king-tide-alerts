@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Waves, TrendingUp, AlertTriangle, HelpCircle, ChevronDown } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -46,6 +47,17 @@ const FAQ_ITEMS = [
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.slice(1);
+      // Small delay to let the page render before scrolling
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [location.hash]);
 
   return (
     <div className="min-h-screen flex flex-col">
