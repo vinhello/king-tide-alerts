@@ -53,3 +53,19 @@ def test_webhook_invalid_signature_rejected(client):
         )
 
     assert response.status_code == 400
+
+
+def test_create_checkout_session_amount_below_minimum_rejected(client):
+    response = client.post(
+        "/api/stripe/create-checkout-session",
+        json={"amount": 50},
+    )
+    assert response.status_code == 422
+
+
+def test_create_checkout_session_amount_above_maximum_rejected(client):
+    response = client.post(
+        "/api/stripe/create-checkout-session",
+        json={"amount": 10_000_000},
+    )
+    assert response.status_code == 422

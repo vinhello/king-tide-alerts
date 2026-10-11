@@ -78,11 +78,11 @@ App runs at http://localhost:5173
 ## Running tests
 
 ```bash
-# Backend (32 tests)
+# Backend (76 tests)
 cd backend
 pytest tests/ -v
 
-# Frontend (13 tests)
+# Frontend (27 tests)
 cd frontend
 npx vitest run
 ```
@@ -124,6 +124,7 @@ The project deploys as three Railway services:
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `ADMIN_API_KEY` | API key for admin endpoints (e.g. test-alert) |
 | `APP_URL` | Frontend URL (for confirmation/unsubscribe links) |
+| `FEEDBACK_EMAIL` | Inbox that receives feedback form submissions (default: `info@kingtidealert.com`) |
 | `NOAA_STATION_ID` | NOAA station (default: `9414806` — Sausalito) |
 | `KING_TIDE_THRESHOLD` | Alert threshold in MLLW ft (default: `6.0`) |
 | `KING_TIDE_HEIGHT` | King tide label threshold in MLLW ft (default: `6.5`) |
@@ -143,6 +144,7 @@ The project deploys as three Railway services:
 | POST | `/api/subscribe` | Create a new subscriber |
 | GET | `/api/confirm/{token}` | Confirm subscription |
 | GET | `/api/unsubscribe/{token}` | Unsubscribe |
+| POST | `/api/feedback` | Send feedback from the website to the project inbox |
 | GET | `/api/tides/upcoming?days=14` | Tide predictions with king tide flags |
 | POST | `/api/stripe/create-checkout-session` | Start a donation checkout |
 | POST | `/api/stripe/webhook` | Stripe webhook handler |

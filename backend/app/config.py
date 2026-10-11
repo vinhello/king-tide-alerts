@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: str = ""
     ADMIN_PASSWORD: str = ""
     ENVIRONMENT: str = "development"
+    FEEDBACK_EMAIL: str = "info@kingtidealert.com"
+    FEEDBACK_MAX_MESSAGE_LENGTH: int = 5000
+    FEEDBACK_MAX_SUBJECT_LENGTH: int = 200
+    DONATION_MIN_CENTS: int = 100
+    DONATION_MAX_CENTS: int = 50000
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
