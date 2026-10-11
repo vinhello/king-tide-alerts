@@ -1,8 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from app.config import settings
 
 
 class CheckoutSessionRequest(BaseModel):
-    amount: int = 500  # cents, default $5
+    amount: int = Field(
+        default=500,
+        ge=settings.DONATION_MIN_CENTS,
+        le=settings.DONATION_MAX_CENTS,
+        description="Donation amount in cents",
+    )
 
 
 class CheckoutSessionResponse(BaseModel):

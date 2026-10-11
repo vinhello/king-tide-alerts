@@ -4,6 +4,8 @@ import type {
   CheckoutSessionResponse,
   ConfirmResponse,
   CurrentTideStatus,
+  FeedbackRequest,
+  FeedbackResponse,
   HistoryResponse,
   NotificationStats,
   SubscribeRequest,
@@ -48,6 +50,13 @@ export async function getUpcomingTides(
   const response = await api.get<UpcomingTidesResponse>(
     `/api/tides/upcoming?days=${days}`
   );
+  return response.data;
+}
+
+export async function submitFeedback(
+  data: FeedbackRequest
+): Promise<FeedbackResponse> {
+  const response = await api.post<FeedbackResponse>("/api/feedback", data);
   return response.data;
 }
 

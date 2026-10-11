@@ -7,7 +7,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.rate_limit import limiter
-from app.routers import admin, stripe, subscribers, tides
+from app.routers import admin, feedback, stripe, subscribers, tides
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 logging.basicConfig(
@@ -60,6 +60,7 @@ app.add_middleware(
 )
 
 app.include_router(admin.router)
+app.include_router(feedback.router)
 app.include_router(subscribers.router)
 app.include_router(tides.router)
 app.include_router(stripe.router)

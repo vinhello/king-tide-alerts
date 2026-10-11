@@ -1,3 +1,6 @@
+import html
+
+
 def confirmation_email(name: str, confirm_url: str) -> str:
     return f"""
     <html>
@@ -115,3 +118,31 @@ def king_tide_alert_sms(
         f"Plan alternate routes. "
         f"Reply STOP to opt out. kingtidealert.com"
     )
+
+
+def feedback_email(subject: str, message: str, reply_email: str | None) -> str:
+    """Render a visitor's feedback for the project inbox.
+
+    Visitor-supplied text is HTML-escaped so a message can't inject markup.
+    """
+    safe_subject = html.escape(subject)
+    safe_message = html.escape(message).replace("\n", "<br>")
+    if reply_email:
+        safe_reply = html.escape(reply_email)
+        reply_line = f'<a href="mailto:{safe_reply}" style="color: #2b6cb0;">{safe_reply}</a>'
+    else:
+        reply_line = "not provided"
+
+    return f"""
+    <html>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #1a365d; font-size: 20px;">Website feedback</h1>
+        <p><strong>Subject:</strong> {safe_subject}</p>
+        <p><strong>Reply to:</strong> {reply_line}</p>
+        <div style="background-color: #f7fafc; border-left: 4px solid #2b6cb0; padding: 16px; margin: 16px 0; border-radius: 4px; white-space: normal;">
+            {safe_message}
+        </div>
+        <p style="color: #718096; font-size: 13px;">Sent from the feedback form at kingtidealert.com.</p>
+    </body>
+    </html>
+    """

@@ -1,27 +1,55 @@
 import { useState, type FormEvent } from "react";
-import { Mail, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CheckCircle, Loader2, Mail, MessageCircle } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { submitFeedback } from "../services/api";
+
+type Status = "idle" | "loading" | "success" | "error";
+
+const GENERIC_ERROR = "Something went wrong sending your feedback. Please try again.";
+const RATE_LIMIT_ERROR = "Too many messages from your connection. Please try again later.";
+
+function errorMessageFor(err: unknown): string {
+  if (err && typeof err === "object" && "response" in err) {
+    const axiosErr = err as { response?: { status?: number; data?: { detail?: unknown } } };
+    if (axiosErr.response?.status === 429) return RATE_LIMIT_ERROR;
+    const detail = axiosErr.response?.data?.detail;
+    if (typeof detail === "string") return detail;
+  }
+  return GENERIC_ERROR;
+}
 
 export default function Feedback() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
+  // Honeypot: hidden from people, filled in by bots. The backend drops
+  // submissions where it is non-empty.
+  const [website, setWebsite] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setStatus("loading");
+    setErrorMessage("");
 
-    // Create mailto link with subject and body
-    const mailtoLink = `mailto:info@kingtidealert.com?subject=${encodeURIComponent(
-      subject || "King Tide Alert Feedback"
-    )}&body=${encodeURIComponent(
-      message + (email ? `\n\nReply to: ${email}` : "")
-    )}`;
-
-    window.location.href = mailtoLink;
+    try {
+      await submitFeedback({
+        message: message.trim(),
+        subject: subject.trim() || undefined,
+        email: email.trim() || undefined,
+        website: website || undefined,
+      });
+      setStatus("success");
+    } catch (err: unknown) {
+      setStatus("error");
+      setErrorMessage(errorMessageFor(err));
+    }
   };
 
   return (
@@ -41,74 +69,117 @@ export default function Feedback() {
             </p>
           </div>
 
-          {/* Feedback Form */}
-          <div className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Your Email (optional) */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Your Email <span className="text-muted-foreground text-sm">(optional)</span>
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your.email@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-input-background"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Include your email if you'd like a response
-                </p>
+          {status === "success" ? (
+            <div className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-col items-center text-center gap-4">
+                <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-secondary" />
+                <h2 className="text-lg sm:text-xl">Thanks, your feedback has been sent.</h2>
+                <Link
+                  to="/"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2.5 text-sm text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  Back to home
+                </Link>
               </div>
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Your Email (optional) */}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Your Email <span className="text-muted-foreground text-sm">(optional)</span>
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-input-background"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Include your email if you'd like a response
+                  </p>
+                </div>
 
-              {/* Subject */}
-              <div className="space-y-2">
-                <Label htmlFor="subject">
-                  Subject
-                </Label>
-                <Input
-                  id="subject"
-                  type="text"
-                  placeholder="Brief description of your feedback"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="bg-input-background"
-                />
-              </div>
+                {/* Subject */}
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input
+                    id="subject"
+                    type="text"
+                    placeholder="Brief description of your feedback"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    maxLength={200}
+                    className="bg-input-background"
+                  />
+                </div>
 
-              {/* Message */}
-              <div className="space-y-2">
-                <Label htmlFor="message">
-                  Message <span className="text-destructive">*</span>
-                </Label>
-                <textarea
-                  id="message"
-                  placeholder="Tell us about your experience, suggestions, or issues..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  required
-                  rows={8}
-                  className="flex w-full rounded-md border border-input bg-input-background px-3 py-2 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                />
-              </div>
+                {/* Message */}
+                <div className="space-y-2">
+                  <Label htmlFor="message">
+                    Message <span className="text-destructive">*</span>
+                  </Label>
+                  <textarea
+                    id="message"
+                    placeholder="Tell us about your experience, suggestions, or issues..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    required
+                    maxLength={5000}
+                    rows={8}
+                    className="flex w-full rounded-md border border-input bg-input-background px-3 py-2 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                  />
+                </div>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full sm:w-auto"
-                disabled={!message.trim()}
-              >
-                <Mail className="h-4 w-4 mr-2" />
-                Send Feedback
-              </Button>
+                {/* Honeypot: visually hidden and skipped by keyboard and screen readers */}
+                <div className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+                  <label htmlFor="website">Website</label>
+                  <input
+                    id="website"
+                    name="website"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                  />
+                </div>
 
-              <p className="text-xs text-muted-foreground">
-                Clicking "Send Feedback" will open your default email client with your message pre-filled.
-              </p>
-            </form>
-          </div>
+                {/* Error Message */}
+                {status === "error" && (
+                  <div
+                    role="alert"
+                    className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3"
+                  >
+                    {errorMessage}
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  className="w-full sm:w-auto"
+                  disabled={status === "loading" || !message.trim()}
+                >
+                  {status === "loading" ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send Feedback
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
+          )}
 
           {/* Additional Information */}
           <div className="mt-8 p-4 sm:p-6 bg-muted/50 rounded-lg border border-border/50">

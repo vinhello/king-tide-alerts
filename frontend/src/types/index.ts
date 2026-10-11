@@ -31,6 +31,18 @@ export interface UpcomingTidesResponse {
   station_id: string;
 }
 
+export interface FeedbackRequest {
+  message: string;
+  subject?: string;
+  email?: string;
+  /** Honeypot field; always undefined for real visitors. */
+  website?: string;
+}
+
+export interface FeedbackResponse {
+  message: string;
+}
+
 export interface CheckoutSessionResponse {
   checkout_url: string;
 }

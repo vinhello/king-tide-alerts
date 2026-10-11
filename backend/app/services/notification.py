@@ -9,6 +9,7 @@ from app.models.subscriber import NotificationPreference, Subscriber
 from app.utils.email_templates import (
     confirmation_email,
     confirmation_sms,
+    feedback_email,
     king_tide_alert_email,
     king_tide_alert_sms,
 )
@@ -20,18 +21,21 @@ def _get_twilio_client() -> TwilioClient:
     return TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
 
-async def send_email(to: str, subject: str, html: str) -> None:
+async def send_email(
+    to: str, subject: str, html: str, reply_to: str | None = None
+) -> None:
     """Send an email via Resend."""
     try:
         resend.api_key = settings.RESEND_API_KEY
-        resend.Emails.send(
-            {
-                "from": "King Tide Alerts <alert@alert.kingtidealert.com>",
-                "to": [to],
-                "subject": subject,
-                "html": html,
-            }
-        )
+        params: resend.Emails.SendParams = {
+            "from": "King Tide Alerts <alert@alert.kingtidealert.com>",
+            "to": [to],
+            "subject": subject,
+            "html": html,
+        }
+        if reply_to:
+            params["reply_to"] = reply_to
+        resend.Emails.send(params)
         logger.info(f"Email sent to {to}")
     except Exception as e:
         logger.error(f"Failed to send email to {to}: {e}")
@@ -146,3 +150,23 @@ async def send_king_tide_alert(
                 days_until=days_until,
             )
             await send_sms(subscriber.phone, msg)
+
+
+async def send_feedback(
+    message: str, subject: str | None, reply_email: str | None
+) -> None:
+    """Email a visitor's feedback to the project inbox.
+
+    Reply-To is set to the visitor's address when they provided one, so a
+    normal reply from the inbox goes back to them.
+    """
+    subject_line = subject or "Website feedback"
+    html = feedback_email(
+        subject=subject_line, message=message, reply_email=reply_email
+    )
+    await send_email(
+        settings.FEEDBACK_EMAIL,
+        f"[King Tide Alert feedback] {subject_line}",
+        html,
+        reply_to=reply_email,
+    )

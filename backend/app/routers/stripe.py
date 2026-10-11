@@ -4,6 +4,7 @@ import stripe
 from fastapi import APIRouter, HTTPException, Request
 
 from app.config import settings
+from app.rate_limit import limiter
 from app.schemas.stripe import CheckoutSessionRequest, CheckoutSessionResponse
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,8 @@ stripe.api_key = settings.STRIPE_API_KEY
 
 
 @router.post("/create-checkout-session", response_model=CheckoutSessionResponse)
-async def create_checkout_session(data: CheckoutSessionRequest):
+@limiter.limit("10/minute")
+async def create_checkout_session(request: Request, data: CheckoutSessionRequest):
     try:
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
