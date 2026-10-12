@@ -78,7 +78,7 @@ App runs at http://localhost:5173
 ## Running tests
 
 ```bash
-# Backend (76 tests)
+# Backend (89 tests)
 cd backend
 pytest tests/ -v
 
@@ -125,6 +125,7 @@ The project deploys as three Railway services:
 | `ADMIN_API_KEY` | API key for admin endpoints (e.g. test-alert) |
 | `APP_URL` | Frontend URL (for confirmation/unsubscribe links) |
 | `FEEDBACK_EMAIL` | Inbox that receives feedback form submissions (default: `info@kingtidealert.com`) |
+| `HEALTHCHECK_PING_URL` | Optional. Ping URL of a [healthchecks.io](https://healthchecks.io) check. The daily job pings it on start, success and failure so a missed run triggers an email. Empty disables. |
 | `NOAA_STATION_ID` | NOAA station (default: `9414806` — Sausalito) |
 | `KING_TIDE_THRESHOLD` | Alert threshold in MLLW ft (default: `6.0`) |
 | `KING_TIDE_HEIGHT` | King tide label threshold in MLLW ft (default: `6.5`) |
