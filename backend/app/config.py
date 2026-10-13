@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     TWILIO_PHONE_NUMBER: str = ""
     STRIPE_API_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
+    # Signing secret of the Resend webhook (starts with whsec_). Empty disables
+    # the endpoint, which then answers 503.
+    RESEND_WEBHOOK_SECRET: str = ""
     APP_URL: str = "http://localhost:5173"
     # Public URL of this API (no trailing slash). Used for one-click unsubscribe
     # headers, which must point at an endpoint that accepts POST. Empty disables

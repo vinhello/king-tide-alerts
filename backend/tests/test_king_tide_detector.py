@@ -198,7 +198,7 @@ async def test_send_seven_day_alert_for_period(test_db):
 
     with patch(
         "app.services.king_tide_detector.notification.send_king_tide_alert",
-        new_callable=AsyncMock,
+        new_callable=AsyncMock, return_value="re_test",
     ) as mock_send:
         await send_alerts(test_db)
 
@@ -213,6 +213,8 @@ async def test_send_seven_day_alert_for_period(test_db):
     assert test_db.query(NotificationSent).count() == 1
     notif = test_db.query(NotificationSent).first()
     assert notif.notification_type == NotificationType.SEVEN_DAY_ALERT
+    # Resend's id is kept so delivery webhooks can be matched to this send
+    assert notif.provider_message_id == "re_test"
 
 
 @pytest.mark.asyncio
@@ -233,7 +235,7 @@ async def test_send_forty_eight_hour_alert_for_period(test_db):
 
     with patch(
         "app.services.king_tide_detector.notification.send_king_tide_alert",
-        new_callable=AsyncMock,
+        new_callable=AsyncMock, return_value="re_test",
     ) as mock_send:
         await send_alerts(test_db)
 
@@ -269,7 +271,7 @@ async def test_two_periods_get_separate_alerts(test_db):
 
     with patch(
         "app.services.king_tide_detector.notification.send_king_tide_alert",
-        new_callable=AsyncMock,
+        new_callable=AsyncMock, return_value="re_test",
     ) as mock_send:
         await send_alerts(test_db)
 
@@ -295,7 +297,7 @@ async def test_no_duplicate_period_alerts(test_db):
 
     with patch(
         "app.services.king_tide_detector.notification.send_king_tide_alert",
-        new_callable=AsyncMock,
+        new_callable=AsyncMock, return_value="re_test",
     ) as mock_send:
         await send_alerts(test_db)
 
@@ -317,7 +319,7 @@ async def test_no_alerts_without_subscribers(test_db):
 
     with patch(
         "app.services.king_tide_detector.notification.send_king_tide_alert",
-        new_callable=AsyncMock,
+        new_callable=AsyncMock, return_value="re_test",
     ) as mock_send:
         await send_alerts(test_db)
 
@@ -355,7 +357,7 @@ async def test_alert_uses_peak_event_params(test_db):
 
     with patch(
         "app.services.king_tide_detector.notification.send_king_tide_alert",
-        new_callable=AsyncMock,
+        new_callable=AsyncMock, return_value="re_test",
     ) as mock_send:
         await send_alerts(test_db)
 
@@ -389,7 +391,7 @@ async def test_send_alerts_dry_run_plans_without_sending(test_db):
     test_db.commit()
 
     with patch(
-        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock
+        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock, return_value="re_test"
     ) as send_alert:
         plan = await send_alerts(test_db, dry_run=True)
 
@@ -433,7 +435,7 @@ async def test_send_alerts_real_run_returns_matching_plan(test_db):
     test_db.commit()
 
     with patch(
-        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock
+        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock, return_value="re_test"
     ) as send_alert:
         plan = await send_alerts(test_db)
 
@@ -476,7 +478,7 @@ async def test_send_alerts_skips_unsubscribed(test_db):
     test_db.commit()
 
     with patch(
-        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock
+        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock, return_value="re_test"
     ) as send_alert:
         plan = await send_alerts(test_db)
 

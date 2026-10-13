@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import Enum, ForeignKey, Uuid
+from sqlalchemy import Enum, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -33,6 +33,13 @@ class NotificationSent(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+    # Resend's id for the email, so delivery webhooks can be matched back to
+    # this send. Empty for SMS, for sends before this was recorded, and when
+    # sending was switched off.
+    provider_message_id: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True, index=True
+    )
 
     subscriber = relationship("Subscriber", back_populates="notifications")
     king_tide_event = relationship("KingTideEvent", back_populates="notifications")
+    email_events = relationship("EmailEvent", back_populates="notification")

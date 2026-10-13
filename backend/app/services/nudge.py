@@ -72,12 +72,13 @@ async def nudge_unconfirmed(
         return outcome
 
     for subscriber in subscribers:
-        await notification.send_confirmation_reminder(subscriber)
+        message_id = await notification.send_confirmation_reminder(subscriber)
         db.add(
             NotificationSent(
                 subscriber_id=subscriber.id,
                 king_tide_event_id=None,
                 notification_type=NotificationType.CONFIRMATION,
+                provider_message_id=message_id,
             )
         )
         outcome.sent += 1

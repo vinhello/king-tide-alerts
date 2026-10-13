@@ -169,7 +169,7 @@ def test_test_alert_sends_only_to_explicit_recipient(client, test_db):
     test_db.commit()
 
     with patch(
-        "app.routers.admin.send_king_tide_alert", new_callable=AsyncMock
+        "app.routers.admin.send_king_tide_alert", new_callable=AsyncMock, return_value="re_test"
     ) as mock_send:
         response = client.post(
             "/api/admin/test-alert?to=vince@example.com",
@@ -192,7 +192,7 @@ def test_test_alert_requires_recipient(client, test_db):
     """POST /api/admin/test-alert without `to` is refused and sends nothing."""
     _create_confirmed_subscriber(test_db)
     with patch(
-        "app.routers.admin.send_king_tide_alert", new_callable=AsyncMock
+        "app.routers.admin.send_king_tide_alert", new_callable=AsyncMock, return_value="re_test"
     ) as mock_send:
         response = client.post(
             "/api/admin/test-alert",
@@ -266,7 +266,7 @@ def test_alert_preview_reports_plan_without_sending(client, test_db):
     test_db.commit()
 
     with patch(
-        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock
+        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock, return_value="re_test"
     ) as mock_send:
         response = client.get(
             "/api/admin/alerts/preview",

@@ -7,7 +7,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.rate_limit import limiter
-from app.routers import admin, feedback, stripe, subscribers, tides
+from app.routers import admin, feedback, stripe, subscribers, tides, webhooks
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 logging.basicConfig(
@@ -64,6 +64,7 @@ app.include_router(feedback.router)
 app.include_router(subscribers.router)
 app.include_router(tides.router)
 app.include_router(stripe.router)
+app.include_router(webhooks.router)
 
 
 @app.get("/api/health")

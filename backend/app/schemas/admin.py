@@ -25,6 +25,10 @@ class NotificationStats(BaseModel):
     seven_day_alerts: int
     forty_eight_hour_reminders: int
     confirmations: int
+    # Delivery outcomes Resend reported, counted per email.
+    delivered: int = 0
+    bounced: int = 0
+    complained: int = 0
     recent: list["NotificationHistoryItem"]
     daily_counts: list["DailyCount"]
 
@@ -34,6 +38,9 @@ class NotificationHistoryItem(BaseModel):
     subscriber_name: str
     notification_type: str
     sent_at: datetime
+    # delivered, delivery_delayed, bounced, complained, sent (no outcome yet)
+    # or unknown (sent before outcomes were recorded).
+    delivery_status: str = "unknown"
 
 
 class DailyCount(BaseModel):
