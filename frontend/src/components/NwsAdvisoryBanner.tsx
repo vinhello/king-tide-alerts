@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { AlertTriangle, ExternalLink } from "lucide-react";
 import { getNwsAlerts } from "../services/api";
 import type { NwsAlert } from "../types";
 
@@ -42,22 +42,14 @@ interface AdvisoryCardProps {
 }
 
 function AdvisoryCard({ alert }: AdvisoryCardProps) {
-  const [open, setOpen] = useState(false);
   const warning = isWarning(alert.event);
   const borderClass = warning ? "border-l-destructive" : "border-l-accent";
   const textClass = warning ? "text-destructive" : "text-accent";
   const until = formatUntil(alert.ends);
   const issued = formatIssued(alert.sent);
 
-  // Everything below is the NWS text, passed through as received.
-  const details: [string, string][] = [
-    ["Where", alert.where],
-    ["When", alert.when],
-    ["Impacts", alert.impacts],
-    ["Additional details", alert.additional_details],
-    ["Instructions", alert.instruction],
-  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
-
+  // The summary only: the event, how long it is in effect, the NWS "WHAT"
+  // sentence as received, who issued it, and the link to the rest.
   return (
     <div
       role="status"
@@ -91,35 +83,6 @@ function AdvisoryCard({ alert }: AdvisoryCardProps) {
               <ExternalLink className="h-3 w-3" aria-hidden="true" />
             </a>
           </p>
-          {details.length > 0 && (
-            <>
-              <button
-                type="button"
-                onClick={() => setOpen((value) => !value)}
-                aria-expanded={open}
-                className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {open ? "Hide the full text" : "Full NWS text"}
-                {open ? (
-                  <ChevronUp className="h-3 w-3" aria-hidden="true" />
-                ) : (
-                  <ChevronDown className="h-3 w-3" aria-hidden="true" />
-                )}
-              </button>
-              {open && (
-                <dl className="mt-2 space-y-2 text-sm">
-                  {details.map(([label, value]) => (
-                    <div key={label}>
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {label}
-                      </dt>
-                      <dd className="text-foreground">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              )}
-            </>
-          )}
         </div>
       </div>
     </div>

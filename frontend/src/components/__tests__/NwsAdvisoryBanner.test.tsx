@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import NwsAdvisoryBanner from "../NwsAdvisoryBanner";
 
@@ -62,12 +62,10 @@ describe("NwsAdvisoryBanner", () => {
     expect(link).toHaveAttribute("target", "_blank");
     expect(screen.getByRole("status")).toHaveClass("border-l-accent");
 
-    // The remaining NWS text is behind a toggle.
+    // Summary only: the rest of the NWS text stays on their site.
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.queryByText(/do not drive around barricades/i)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /full nws text/i }));
-    expect(screen.getByText(/do not drive around barricades/i)).toBeInTheDocument();
-    expect(screen.getByText("Until 3 PM PDT Tuesday.")).toBeInTheDocument();
-    expect(screen.queryByText("Additional details")).not.toBeInTheDocument();
+    expect(screen.queryByText("Until 3 PM PDT Tuesday.")).not.toBeInTheDocument();
   });
 
   it("uses the warning tone for a Coastal Flood Warning and caps at two banners", async () => {
