@@ -130,7 +130,7 @@ export default function TideChart() {
               labelFormatter={(value) => formatTooltipDate(value as number)}
               formatter={(value, name) => {
                 if (name === 'height' && typeof value === 'number') {
-                  return [`${value.toFixed(1)} ft`, 'Tide Height'];
+                  return [`${value.toFixed(1)} ft`, 'Predicted'];
                 }
                 return String(value);
               }}
@@ -191,7 +191,11 @@ export default function TideChart() {
         </ResponsiveContainer>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="h-0.5 w-6" style={{ borderTop: '2px solid #0A7EA4' }} />
+              <span>Predicted</span>
+            </div>
             <div className="flex items-center gap-2">
               <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
               <span>Possible bike path flooding</span>
