@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## System overview
-King Tide Alert monitors NOAA tide predictions for Sausalito (station 9414806) and sends email/SMS notifications to subscribers before high tides that may flood the Bay Trail bike path. It consists of a FastAPI backend and a React SPA frontend, deployed as separate services on Railway with a shared PostgreSQL database.
+King Tide Alert monitors NOAA tide predictions for the San Francisco Golden Gate gauge (station 9414290) and sends email/SMS notifications to subscribers before high tides that may flood the Bay Trail bike path. It consists of a FastAPI backend and a React SPA frontend, deployed as separate services on Railway with a shared PostgreSQL database.
 
 ## Layer structure
 ```
@@ -57,7 +57,7 @@ Conventions:
 ## External services
 | Service | Purpose | Config |
 |---|---|---|
-| NOAA Tides & Currents | Tide predictions for station 9414806 | `NOAA_STATION_ID` |
+| NOAA Tides & Currents | Tide predictions and observations for station 9414290 (San Francisco, Golden Gate) | `NOAA_STATION_ID` |
 | Resend | Email notifications from `alert@alert.kingtidealert.com` | `RESEND_API_KEY` |
 | Twilio | SMS notifications (pending A2P registration) | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` |
 | Stripe | Donation checkout flow | `STRIPE_API_KEY`, `STRIPE_WEBHOOK_SECRET` |

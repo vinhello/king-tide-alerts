@@ -136,12 +136,12 @@ def test_events_upcoming(client, test_db):
     future_event = KingTideEvent(
         event_datetime=datetime.now(timezone.utc) + timedelta(days=5),
         predicted_height=6.8,
-        station_id="9414806",
+        station_id="9414290",
     )
     past_event = KingTideEvent(
         event_datetime=datetime.now(timezone.utc) - timedelta(days=5),
         predicted_height=6.5,
-        station_id="9414806",
+        station_id="9414290",
     )
     test_db.add_all([future_event, past_event])
     test_db.commit()

@@ -11,7 +11,7 @@ const FAQ_ITEMS = [
   {
     question: "How does this service work?",
     answer:
-      "We monitor NOAA tide predictions for the Sausalito station (9414806) daily. When tides are forecasted to exceed 6.0 feet MLLW, we send you an alert 7 days before and a reminder 48 hours before the event.",
+      "Every morning we check NOAA tide predictions for the San Francisco (Golden Gate) gauge, station 9414290. It's the nearest gauge that actually measures the water, and the reference Marin County and Caltrans use for flooding at Manzanita. When a tide is predicted to exceed 6.0 feet MLLW there, we send an alert 7 days before and a reminder 48 hours before.",
   },
   {
     question: "What's the difference between a high tide alert and a king tide alert?",

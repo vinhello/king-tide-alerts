@@ -10,7 +10,7 @@ def _make_event(db, event_datetime, height=6.8):
         id=uuid.uuid4(),
         event_datetime=event_datetime,
         predicted_height=height,
-        station_id="9414806",
+        station_id="9414290",
         seven_day_alert_sent=False,
         forty_eight_hour_alert_sent=False,
     )

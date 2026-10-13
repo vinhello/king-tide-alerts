@@ -64,7 +64,7 @@ def king_tide_alert_email(
             <p style="margin: 8px 0 0;"><strong>Peak tide:</strong> {peak_time} on {peak_date}</p>
             <p style="margin: 8px 0 0;"><strong>Flooding possible:</strong> {flood_window_start} – {flood_window_end} (estimate, around peak)</p>
             <p style="margin: 8px 0 0;"><strong>Peak height:</strong> {height:.1f} ft</p>
-            <p style="margin: 8px 0 0;"><strong>Station:</strong> Sausalito</p>
+            <p style="margin: 8px 0 0;"><strong>Gauge:</strong> San Francisco (Golden Gate), NOAA 9414290</p>
         </div>
         <p>Consider alternate routes or plan your ride around the flooding window.</p>
         <p style="margin-top: 16px;">
