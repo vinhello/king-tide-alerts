@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -58,3 +58,23 @@ class SystemHealth(BaseModel):
 
 class TestAlertResponse(BaseModel):
     message: str
+
+
+class PlannedAlert(BaseModel):
+    notification_type: str
+    period_start: date
+    period_end: date
+    peak_height: float
+    peak_datetime: datetime
+    days_until: int
+    recipient_count: int
+
+
+class AlertRunPreview(BaseModel):
+    """What the daily run would send right now. Produced without sending."""
+
+    dry_run: bool
+    subscriber_count: int
+    alerts: list[PlannedAlert]
+    sample_subject: Optional[str]
+    sample_email_html: Optional[str]

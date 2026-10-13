@@ -362,3 +362,84 @@ async def test_alert_uses_peak_event_params(test_db):
     mock_send.assert_called_once()
     call_kwargs = mock_send.call_args.kwargs
     assert call_kwargs["peak_height"] == 7.1
+
+
+@pytest.mark.asyncio
+async def test_send_alerts_dry_run_plans_without_sending(test_db):
+    """dry_run reports what would go out and touches nothing."""
+    from datetime import datetime, timedelta, timezone
+    from unittest.mock import AsyncMock, patch
+
+    from app.models.king_tide_event import KingTideEvent
+    from app.models.notification_sent import NotificationSent, NotificationType
+    from app.models.subscriber import NotificationPreference, Subscriber
+    from app.services.king_tide_detector import send_alerts
+
+    for i in range(2):
+        test_db.add(
+            Subscriber(
+                name=f"Rider {i}", email=f"rider{i}@example.com",
+                notification_preference=NotificationPreference.EMAIL,
+                unsubscribe_token=f"tok-dry-{i}", confirmed=True,
+            )
+        )
+    event_dt = datetime.now(timezone.utc) + timedelta(days=2)
+    event = KingTideEvent(event_datetime=event_dt, predicted_height=6.4, station_id="9414290")
+    test_db.add(event)
+    test_db.commit()
+
+    with patch(
+        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock
+    ) as send_alert:
+        plan = await send_alerts(test_db, dry_run=True)
+
+    assert plan.dry_run is True
+    assert plan.subscriber_count == 2
+    assert len(plan.alerts) == 1
+    planned = plan.alerts[0]
+    assert planned.notification_type is NotificationType.FORTY_EIGHT_HOUR_REMINDER
+    assert planned.recipient_count == 2
+    assert planned.peak_height == 6.4
+
+    send_alert.assert_not_called()
+    test_db.refresh(event)
+    assert event.forty_eight_hour_alert_sent is False
+    assert test_db.query(NotificationSent).count() == 0
+
+
+@pytest.mark.asyncio
+async def test_send_alerts_real_run_returns_matching_plan(test_db):
+    """A real run returns the same plan shape and actually sends and records."""
+    from datetime import datetime, timedelta, timezone
+    from unittest.mock import AsyncMock, patch
+
+    from app.models.king_tide_event import KingTideEvent
+    from app.models.notification_sent import NotificationSent
+    from app.models.subscriber import NotificationPreference, Subscriber
+    from app.services.king_tide_detector import send_alerts
+
+    test_db.add(
+        Subscriber(
+            name="Rider", email="rider@example.com",
+            notification_preference=NotificationPreference.EMAIL,
+            unsubscribe_token="tok-real", confirmed=True,
+        )
+    )
+    event = KingTideEvent(
+        event_datetime=datetime.now(timezone.utc) + timedelta(days=2),
+        predicted_height=6.4, station_id="9414290",
+    )
+    test_db.add(event)
+    test_db.commit()
+
+    with patch(
+        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock
+    ) as send_alert:
+        plan = await send_alerts(test_db)
+
+    assert plan.dry_run is False
+    assert len(plan.alerts) == 1 and plan.alerts[0].recipient_count == 1
+    send_alert.assert_awaited_once()
+    test_db.refresh(event)
+    assert event.forty_eight_hour_alert_sent is True
+    assert test_db.query(NotificationSent).count() == 1

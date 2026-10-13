@@ -157,10 +157,40 @@ def test_events_upcoming(client, test_db):
     assert data[0]["predicted_height"] == 6.8
 
 
-def test_test_alert_sends(client, test_db):
-    """POST /api/admin/test-alert should send alerts to confirmed subscribers."""
+def test_test_alert_sends_only_to_explicit_recipient(client, test_db):
+    """POST /api/admin/test-alert sends to the given address and nobody else."""
     _create_confirmed_subscriber(test_db)
+    test_db.add(
+        Subscriber(
+            name="Another", email="another@example.com",
+            notification_preference="email", unsubscribe_token="tok-another", confirmed=True,
+        )
+    )
+    test_db.commit()
 
+    with patch(
+        "app.routers.admin.send_king_tide_alert", new_callable=AsyncMock
+    ) as mock_send:
+        response = client.post(
+            "/api/admin/test-alert?to=vince@example.com",
+            headers={"x-admin-password": "test-password"},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Test alert sent to vince@example.com"
+    mock_send.assert_called_once()
+    recipient = mock_send.call_args.kwargs["subscriber"]
+    assert recipient.email == "vince@example.com"
+
+    # Nothing persisted: no event, no notification record, no new subscriber
+    assert test_db.query(KingTideEvent).count() == 0
+    assert test_db.query(NotificationSent).count() == 0
+    assert test_db.query(Subscriber).count() == 2
+
+
+def test_test_alert_requires_recipient(client, test_db):
+    """POST /api/admin/test-alert without `to` is refused and sends nothing."""
+    _create_confirmed_subscriber(test_db)
     with patch(
         "app.routers.admin.send_king_tide_alert", new_callable=AsyncMock
     ) as mock_send:
@@ -168,22 +198,16 @@ def test_test_alert_sends(client, test_db):
             "/api/admin/test-alert",
             headers={"x-admin-password": "test-password"},
         )
-
-    assert response.status_code == 200
-    assert response.json()["message"] == "Test alert sent to 1 subscriber(s)"
-    mock_send.assert_called_once()
-
-    # Verify no KingTideEvent was persisted
-    assert test_db.query(KingTideEvent).count() == 0
+    assert response.status_code == 422
+    mock_send.assert_not_called()
 
 
-def test_test_alert_no_subscribers(client):
-    """POST /api/admin/test-alert should return 404 if no confirmed subscribers."""
+def test_test_alert_rejects_invalid_recipient(client):
     response = client.post(
-        "/api/admin/test-alert",
+        "/api/admin/test-alert?to=not-an-email",
         headers={"x-admin-password": "test-password"},
     )
-    assert response.status_code == 404
+    assert response.status_code == 422
 
 
 def test_test_alert_wrong_key(client):
@@ -198,7 +222,7 @@ def test_test_alert_wrong_key(client):
 def test_test_alert_height_too_low(client):
     """POST /api/admin/test-alert with height below minimum should return 422."""
     response = client.post(
-        "/api/admin/test-alert?height=4.0",
+        "/api/admin/test-alert?to=a@b.com&height=4.0",
         headers={"x-admin-password": "test-password"},
     )
     assert response.status_code == 422
@@ -207,7 +231,7 @@ def test_test_alert_height_too_low(client):
 def test_test_alert_height_too_high(client):
     """POST /api/admin/test-alert with height above maximum should return 422."""
     response = client.post(
-        "/api/admin/test-alert?height=25.0",
+        "/api/admin/test-alert?to=a@b.com&height=25.0",
         headers={"x-admin-password": "test-password"},
     )
     assert response.status_code == 422
@@ -216,7 +240,7 @@ def test_test_alert_height_too_high(client):
 def test_test_alert_days_until_too_low(client):
     """POST /api/admin/test-alert with days_until below minimum should return 422."""
     response = client.post(
-        "/api/admin/test-alert?days_until=0",
+        "/api/admin/test-alert?to=a@b.com&days_until=0",
         headers={"x-admin-password": "test-password"},
     )
     assert response.status_code == 422
@@ -225,7 +249,53 @@ def test_test_alert_days_until_too_low(client):
 def test_test_alert_days_until_too_high(client):
     """POST /api/admin/test-alert with days_until above maximum should return 422."""
     response = client.post(
-        "/api/admin/test-alert?days_until=31",
+        "/api/admin/test-alert?to=a@b.com&days_until=31",
         headers={"x-admin-password": "test-password"},
     )
     assert response.status_code == 422
+
+
+def test_alert_preview_reports_plan_without_sending(client, test_db):
+    """GET /api/admin/alerts/preview describes the run and sends nothing."""
+    from datetime import timedelta
+
+    _create_confirmed_subscriber(test_db)
+    event_dt = datetime.now(timezone.utc) + timedelta(days=2)
+    event = KingTideEvent(event_datetime=event_dt, predicted_height=6.7, station_id="9414290")
+    test_db.add(event)
+    test_db.commit()
+
+    with patch(
+        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock
+    ) as mock_send:
+        response = client.get(
+            "/api/admin/alerts/preview",
+            headers={"x-admin-password": "test-password"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["dry_run"] is True
+    assert data["subscriber_count"] == 1
+    assert len(data["alerts"]) == 1
+    assert data["alerts"][0]["notification_type"] == "forty_eight_hour_reminder"
+    assert data["alerts"][0]["recipient_count"] == 1
+    assert "King Tide" in data["sample_subject"]
+    assert "Unsubscribe" in data["sample_email_html"]
+
+    mock_send.assert_not_called()
+    test_db.refresh(event)
+    assert event.forty_eight_hour_alert_sent is False
+    assert test_db.query(NotificationSent).count() == 0
+
+
+def test_alert_preview_with_nothing_due(client, test_db):
+    _create_confirmed_subscriber(test_db)
+    response = client.get(
+        "/api/admin/alerts/preview",
+        headers={"x-admin-password": "test-password"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["alerts"] == []
+    assert data["sample_email_html"] is None

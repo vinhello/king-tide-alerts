@@ -21,6 +21,28 @@ def _ensure_aware(dt: datetime) -> datetime:
 
 
 @dataclass
+class PlannedAlert:
+    """One alert the daily run sent, or in a dry run would send."""
+
+    notification_type: NotificationType
+    period_start: date
+    period_end: date
+    peak_height: float
+    peak_datetime: datetime
+    days_until: int
+    recipient_count: int
+
+
+@dataclass
+class AlertRunPlan:
+    """What a run of send_alerts did, or would do when dry_run is set."""
+
+    dry_run: bool
+    subscriber_count: int
+    alerts: list[PlannedAlert] = field(default_factory=list)
+
+
+@dataclass
 class TidePeriod:
     """A group of consecutive days that each have at least one high tide event."""
 
@@ -113,11 +135,14 @@ async def detect_and_store_king_tides(db: Session) -> list[KingTideEvent]:
     return new_events
 
 
-async def send_alerts(db: Session) -> None:
+async def send_alerts(db: Session, dry_run: bool = False) -> AlertRunPlan:
     """Send 7-day and 48-hour alerts for upcoming king tide events.
 
     Events are grouped into tide periods (consecutive calendar days).
     One alert is sent per period per subscriber, not per event.
+
+    With dry_run nothing is sent, marked or recorded; the returned plan
+    describes exactly what a real run would do right now.
     """
     now = datetime.now(timezone.utc)
     today = now.date()
@@ -125,10 +150,11 @@ async def send_alerts(db: Session) -> None:
     subscribers = (
         db.query(Subscriber).filter(Subscriber.confirmed.is_(True)).all()
     )
+    plan = AlertRunPlan(dry_run=dry_run, subscriber_count=len(subscribers))
 
     if not subscribers:
         logger.info("No confirmed subscribers, skipping alerts")
-        return
+        return plan
 
     # Query all upcoming events in the next 30 days
     upcoming_events = (
@@ -143,73 +169,89 @@ async def send_alerts(db: Session) -> None:
 
     if not upcoming_events:
         logger.info("No upcoming events found")
-        return
+        return plan
 
     periods = _group_into_periods(upcoming_events)
-    seven_day_count = 0
-    forty_eight_hour_count = 0
 
     for period in periods:
         days_until = (period.start_date - today).days
 
         # 7-day alert: period starts in 6-7 days
         if 6 <= days_until <= 7:
-            # Check if ANY event in this period already had 7-day alert sent
-            already_alerted = (
-                db.query(KingTideEvent)
-                .filter(
-                    KingTideEvent.id.in_(period.event_ids),
-                    KingTideEvent.seven_day_alert_sent.is_(True),
-                )
-                .first()
+            await _alert_period_once(
+                db, subscribers, period, days_until,
+                NotificationType.SEVEN_DAY_ALERT,
+                KingTideEvent.seven_day_alert_sent,
+                plan, dry_run,
             )
-            if not already_alerted:
-                await _send_period_alert(
-                    db=db,
-                    subscribers=subscribers,
-                    period=period,
-                    days_until=days_until,
-                    notification_type=NotificationType.SEVEN_DAY_ALERT,
-                )
-                # Mark all events in period as alerted
-                db.query(KingTideEvent).filter(
-                    KingTideEvent.id.in_(period.event_ids)
-                ).update(
-                    {KingTideEvent.seven_day_alert_sent: True},
-                    synchronize_session="fetch",
-                )
-                seven_day_count += 1
 
         # 48-hour alert: period starts in 2 days
         if days_until == 2:
-            already_alerted = (
-                db.query(KingTideEvent)
-                .filter(
-                    KingTideEvent.id.in_(period.event_ids),
-                    KingTideEvent.forty_eight_hour_alert_sent.is_(True),
-                )
-                .first()
+            await _alert_period_once(
+                db, subscribers, period, days_until,
+                NotificationType.FORTY_EIGHT_HOUR_REMINDER,
+                KingTideEvent.forty_eight_hour_alert_sent,
+                plan, dry_run,
             )
-            if not already_alerted:
-                await _send_period_alert(
-                    db=db,
-                    subscribers=subscribers,
-                    period=period,
-                    days_until=days_until,
-                    notification_type=NotificationType.FORTY_EIGHT_HOUR_REMINDER,
-                )
-                db.query(KingTideEvent).filter(
-                    KingTideEvent.id.in_(period.event_ids)
-                ).update(
-                    {KingTideEvent.forty_eight_hour_alert_sent: True},
-                    synchronize_session="fetch",
-                )
-                forty_eight_hour_count += 1
 
-    db.commit()
+    if not dry_run:
+        db.commit()
+
+    seven_day_count = sum(
+        1 for a in plan.alerts if a.notification_type is NotificationType.SEVEN_DAY_ALERT
+    )
+    forty_eight_hour_count = len(plan.alerts) - seven_day_count
+    verb = "Would send" if dry_run else "Sent"
     logger.info(
-        f"Sent alerts for {seven_day_count} 7-day periods "
+        f"{verb} alerts for {seven_day_count} 7-day periods "
         f"and {forty_eight_hour_count} 48-hour periods"
+    )
+    return plan
+
+
+async def _alert_period_once(
+    db: Session,
+    subscribers: list[Subscriber],
+    period: TidePeriod,
+    days_until: int,
+    notification_type: NotificationType,
+    sent_flag,
+    plan: AlertRunPlan,
+    dry_run: bool,
+) -> None:
+    """Alert for a period unless any of its events is already flagged as alerted."""
+    already_alerted = (
+        db.query(KingTideEvent)
+        .filter(KingTideEvent.id.in_(period.event_ids), sent_flag.is_(True))
+        .first()
+    )
+    if already_alerted:
+        return
+
+    recipients = await _send_period_alert(
+        db=db,
+        subscribers=subscribers,
+        period=period,
+        days_until=days_until,
+        notification_type=notification_type,
+        dry_run=dry_run,
+    )
+    if not dry_run:
+        # Mark all events in period as alerted
+        db.query(KingTideEvent).filter(
+            KingTideEvent.id.in_(period.event_ids)
+        ).update({sent_flag: True}, synchronize_session="fetch")
+
+    plan.alerts.append(
+        PlannedAlert(
+            notification_type=notification_type,
+            period_start=period.start_date,
+            period_end=period.end_date,
+            peak_height=period.peak_height,
+            peak_datetime=period.peak_datetime,
+            days_until=days_until,
+            recipient_count=recipients,
+        )
     )
 
 
@@ -219,11 +261,12 @@ async def _send_period_alert(
     period: TidePeriod,
     days_until: int,
     notification_type: NotificationType,
-) -> None:
-    """Send one alert per subscriber for a tide period.
+    dry_run: bool = False,
+) -> int:
+    """Send one alert per subscriber for a tide period; return how many.
 
     Creates a single NotificationSent record per subscriber, linked to the
-    peak event in the period.
+    peak event in the period. With dry_run, counts recipients only.
     """
     # Find the peak event ID (the one with highest predicted_height)
     peak_event = (
@@ -234,6 +277,14 @@ async def _send_period_alert(
     )
     peak_event_id = peak_event.id if peak_event else period.event_ids[0]
 
+    period_start_dt = datetime.combine(
+        period.start_date, datetime.min.time(), tzinfo=timezone.utc
+    )
+    period_end_dt = datetime.combine(
+        period.end_date, datetime.min.time(), tzinfo=timezone.utc
+    )
+
+    recipients = 0
     for subscriber in subscribers:
         # Check if already notified for this period (via any event in it)
         existing = (
@@ -248,13 +299,9 @@ async def _send_period_alert(
         if existing:
             continue
 
-        # Build period_start / period_end as datetimes for the notification
-        period_start_dt = datetime.combine(
-            period.start_date, datetime.min.time(), tzinfo=timezone.utc
-        )
-        period_end_dt = datetime.combine(
-            period.end_date, datetime.min.time(), tzinfo=timezone.utc
-        )
+        recipients += 1
+        if dry_run:
+            continue
 
         await notification.send_king_tide_alert(
             subscriber=subscriber,
@@ -272,3 +319,5 @@ async def _send_period_alert(
                 notification_type=notification_type,
             )
         )
+
+    return recipients

@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     FEEDBACK_MAX_SUBJECT_LENGTH: int = 200
     DONATION_MIN_CENTS: int = 100
     DONATION_MAX_CENTS: int = 50000
+    # Master switch for outbound email and SMS. When false, every send is logged
+    # as "would have sent" and nothing leaves the system.
+    NOTIFICATIONS_ENABLED: bool = True
     # Dead man's switch for the daily job (healthchecks.io ping URL). Empty disables.
     HEALTHCHECK_PING_URL: str = ""
 
