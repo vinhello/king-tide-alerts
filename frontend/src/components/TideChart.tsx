@@ -12,6 +12,7 @@ import {
 import { CalendarDays } from "lucide-react";
 import type { TidePrediction } from "../types";
 import { getUpcomingTides } from "../services/api";
+import { EVENTS, trackEvent } from "../services/analytics";
 
 interface ChartDataPoint {
   timestamp: number;
@@ -203,6 +204,7 @@ export default function TideChart() {
           <a
             href={`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/tides/calendar.ics`}
             download="king-tide-alerts.ics"
+            onClick={() => trackEvent(EVENTS.calendarDownload)}
             className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
           >
             <CalendarDays className="h-4 w-4" />

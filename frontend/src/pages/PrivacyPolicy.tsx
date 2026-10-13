@@ -11,7 +11,7 @@ export default function PrivacyPolicy() {
         <div className="bg-card rounded-lg border border-border p-6 sm:p-8">
           <div className="prose">
             <h1>Privacy Policy</h1>
-            <p className="text-sm text-muted-foreground">Last updated: February 2026</p>
+            <p className="text-sm text-muted-foreground">Last updated: October 2026</p>
 
             <h2>What We Collect</h2>
             <p>
@@ -42,6 +42,15 @@ export default function PrivacyPolicy() {
             <p>
               We do <strong>not</strong> use your data for marketing, advertising,
               or any purpose other than delivering tide alerts.
+            </p>
+
+            <h2>Analytics</h2>
+            <p>
+              We use Plausible Analytics to understand how many people visit the site and which
+              pages and features they use. Plausible is privacy-friendly: it sets no cookies,
+              does not track you across sites, and collects no personal information. Counts of
+              actions such as signing up or downloading the calendar are recorded without any
+              identifying details.
             </p>
 
             <h2>Data Sharing</h2>

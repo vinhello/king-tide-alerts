@@ -2,9 +2,11 @@ import { Link } from "react-router-dom";
 import { Coffee, ExternalLink } from "lucide-react";
 import { Button } from "./ui/button";
 import { createCheckoutSession } from "../services/api";
+import { EVENTS, trackEvent } from "../services/analytics";
 
 export default function Footer() {
   const handleDonate = async () => {
+    trackEvent(EVENTS.donateClick);
     try {
       const { checkout_url } = await createCheckoutSession();
       window.location.href = checkout_url;

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useParams, Link } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { confirmSubscription, resendConfirmation } from "../services/api";
+import { EVENTS, trackEvent } from "../services/analytics";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -34,6 +35,7 @@ export default function Confirmation() {
         const response = await confirmSubscription(token);
         setStatus("success");
         setMessage(response.message);
+        trackEvent(EVENTS.confirm);
       } catch {
         setStatus("error");
         setMessage("Invalid or expired confirmation link.");

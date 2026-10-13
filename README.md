@@ -151,6 +151,10 @@ The project deploys as three Railway services:
 | POST | `/api/stripe/create-checkout-session` | Start a donation checkout |
 | POST | `/api/stripe/webhook` | Stripe webhook handler |
 
+## Analytics
+
+The site uses [Plausible](https://plausible.io) (cookieless, no personal data) via the script tag in `frontend/index.html`, with custom events for Subscribe, Confirm, Resend Confirmation, Calendar Download, Donate Click and Feedback Sent. Events are sent through `frontend/src/services/analytics.ts`, which is a no-op when the script is absent or blocked.
+
 ## Data source
 
 Tide predictions come from the [NOAA CO-OPS API](https://tidesandcurrents.noaa.gov/api/) — free, public, no auth required. The station is San Francisco at the Golden Gate (`9414290`): the nearest gauge with live observations, and the reference Marin County and Caltrans use for flooding at Manzanita. Heights use the MLLW datum, so they represent feet above mean lower low water at that gauge.
