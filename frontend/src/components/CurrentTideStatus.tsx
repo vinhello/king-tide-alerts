@@ -11,22 +11,6 @@ function statusLabel(status: CurrentTideStatusType["status"]): string {
   return "Safe to Ride";
 }
 
-/**
- * One factual sentence about recent measurements. Wording states the
- * measurement and its window only; it never predicts.
- */
-function residualSentence(data: CurrentTideStatusType): string | null {
-  const value = data.residual_ft;
-  const days = data.residual_window_days;
-  if (value === null || value === undefined || !days) return null;
-  const magnitude = Math.abs(value);
-  const comparison =
-    magnitude < 0.05
-      ? "matched NOAA predictions"
-      : `averaged ${magnitude.toFixed(1)} ft ${value > 0 ? "above" : "below"} NOAA predictions`;
-  return `Past ${days} days: water at this gauge ${comparison}.`;
-}
-
 function statusColorClass(status: CurrentTideStatusType["status"]): string {
   if (status === "flooded") return "text-destructive";
   if (status === "caution") return "text-accent";
@@ -73,7 +57,6 @@ export default function CurrentTideStatus() {
   }
 
   const colorClass = statusColorClass(data.status);
-  const measured = residualSentence(data);
 
   return (
     <div className="bg-card rounded-lg border border-border border-l-4 border-l-primary shadow-sm p-4 sm:p-6">
@@ -143,12 +126,6 @@ export default function CurrentTideStatus() {
             </>
           )}
       </div>
-
-      {measured && (
-        <p className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-          {measured}
-        </p>
-      )}
     </div>
   );
 }
