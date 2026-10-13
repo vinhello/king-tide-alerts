@@ -153,7 +153,3 @@ The project deploys as three Railway services:
 ## Data source
 
 Tide predictions come from the [NOAA CO-OPS API](https://tidesandcurrents.noaa.gov/api/) — free, public, no auth required. The station is San Francisco at the Golden Gate (`9414290`): the nearest gauge with live observations, and the reference Marin County and Caltrans use for flooding at Manzanita. Heights use the MLLW datum, so they represent feet above mean lower low water at that gauge.
-
-## Acknowledgments
-
-This project was built with the help of [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding assistant.
