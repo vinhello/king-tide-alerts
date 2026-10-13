@@ -27,7 +27,7 @@ def _fold_line(line: str) -> str:
     return "\r\n ".join(chunks)
 
 
-def generate_ics(events: list[dict], station_id: str = "9414806") -> str:
+def generate_ics(events: list[dict], station_id: str = "9414290") -> str:
     """Generate an ICS calendar file from tide events.
 
     Each event dict has: event_datetime (datetime), predicted_height (float)

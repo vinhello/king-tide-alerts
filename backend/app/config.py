@@ -17,7 +17,9 @@ class Settings(BaseSettings):
     STRIPE_API_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     APP_URL: str = "http://localhost:5173"
-    NOAA_STATION_ID: str = "9414806"
+    # San Francisco (Golden Gate). Nearest gauge with live observations and the
+    # reference Marin County and Caltrans use for flooding at Manzanita.
+    NOAA_STATION_ID: str = "9414290"
     KING_TIDE_THRESHOLD: float = 6.0
     KING_TIDE_HEIGHT: float = 6.5
     ADMIN_API_KEY: str = ""

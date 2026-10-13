@@ -42,7 +42,7 @@ async def test_detect_skips_existing_events(test_db):
     existing = KingTideEvent(
         event_datetime=event_dt,
         predicted_height=6.8,
-        station_id="9414806",
+        station_id="9414290",
     )
     test_db.add(existing)
     test_db.commit()
@@ -73,7 +73,7 @@ def test_group_consecutive_days_into_one_period(test_db):
         e = KingTideEvent(
             event_datetime=base + timedelta(days=i),
             predicted_height=6.5 + i * 0.1,
-            station_id="9414806",
+            station_id="9414290",
         )
         test_db.add(e)
         events.append(e)
@@ -93,18 +93,18 @@ def test_group_gap_creates_two_periods(test_db):
     e1 = KingTideEvent(
         event_datetime=base,
         predicted_height=6.5,
-        station_id="9414806",
+        station_id="9414290",
     )
     e2 = KingTideEvent(
         event_datetime=base + timedelta(days=1),
         predicted_height=6.6,
-        station_id="9414806",
+        station_id="9414290",
     )
     # Gap of 2 days
     e3 = KingTideEvent(
         event_datetime=base + timedelta(days=4),
         predicted_height=6.8,
-        station_id="9414806",
+        station_id="9414290",
     )
     test_db.add_all([e1, e2, e3])
     test_db.commit()
@@ -124,7 +124,7 @@ def test_group_single_event(test_db):
     e = KingTideEvent(
         event_datetime=base,
         predicted_height=6.5,
-        station_id="9414806",
+        station_id="9414290",
     )
     test_db.add(e)
     test_db.commit()
@@ -140,12 +140,12 @@ def test_group_multiple_events_same_day(test_db):
     e1 = KingTideEvent(
         event_datetime=base,
         predicted_height=6.5,
-        station_id="9414806",
+        station_id="9414290",
     )
     e2 = KingTideEvent(
         event_datetime=base + timedelta(hours=12),
         predicted_height=6.9,
-        station_id="9414806",
+        station_id="9414290",
     )
     test_db.add_all([e1, e2])
     test_db.commit()
@@ -191,7 +191,7 @@ async def test_send_seven_day_alert_for_period(test_db):
             KingTideEvent(
                 event_datetime=base + timedelta(days=i),
                 predicted_height=6.5 + i * 0.1,
-                station_id="9414806",
+                station_id="9414290",
             )
         )
     test_db.commit()
@@ -226,7 +226,7 @@ async def test_send_forty_eight_hour_alert_for_period(test_db):
             KingTideEvent(
                 event_datetime=base + timedelta(days=i),
                 predicted_height=7.0 + i * 0.1,
-                station_id="9414806",
+                station_id="9414290",
             )
         )
     test_db.commit()
@@ -253,7 +253,7 @@ async def test_two_periods_get_separate_alerts(test_db):
         KingTideEvent(
             event_datetime=now + timedelta(days=6),
             predicted_height=6.5,
-            station_id="9414806",
+            station_id="9414290",
         )
     )
     # Period 2: 7 days away but with a gap from period 1
@@ -262,7 +262,7 @@ async def test_two_periods_get_separate_alerts(test_db):
         KingTideEvent(
             event_datetime=now + timedelta(days=6 + 3),
             predicted_height=6.8,
-            station_id="9414806",
+            station_id="9414290",
         )
     )
     test_db.commit()
@@ -287,7 +287,7 @@ async def test_no_duplicate_period_alerts(test_db):
     event = KingTideEvent(
         event_datetime=base,
         predicted_height=6.8,
-        station_id="9414806",
+        station_id="9414290",
         seven_day_alert_sent=True,  # Already sent
     )
     test_db.add(event)
@@ -310,7 +310,7 @@ async def test_no_alerts_without_subscribers(test_db):
         KingTideEvent(
             event_datetime=base,
             predicted_height=6.8,
-            station_id="9414806",
+            station_id="9414290",
         )
     )
     test_db.commit()
@@ -334,21 +334,21 @@ async def test_alert_uses_peak_event_params(test_db):
         KingTideEvent(
             event_datetime=base,
             predicted_height=6.2,
-            station_id="9414806",
+            station_id="9414290",
         )
     )
     test_db.add(
         KingTideEvent(
             event_datetime=base + timedelta(days=1),
             predicted_height=7.1,  # Peak
-            station_id="9414806",
+            station_id="9414290",
         )
     )
     test_db.add(
         KingTideEvent(
             event_datetime=base + timedelta(days=2),
             predicted_height=6.5,
-            station_id="9414806",
+            station_id="9414290",
         )
     )
     test_db.commit()

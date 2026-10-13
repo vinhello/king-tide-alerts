@@ -8,7 +8,7 @@ Get notified before high tides flood the Bay Trail through Sausalito. Free email
 
 1. Subscribe with your email or phone number at [kingtidealert.com](https://kingtidealert.com)
 2. We check NOAA tide predictions daily at 6 AM Pacific
-3. When a high tide above 6.0 ft (MLLW) is forecasted at the Sausalito station, you get alerted:
+3. When a high tide above 6.0 ft (MLLW) is forecasted at the San Francisco (Golden Gate) gauge, you get alerted:
    - **7 days before** — heads up to plan ahead
    - **48 hours before** — reminder to take an alternate route
 4. Alerts include the predicted peak time, a flooding window (estimated ~2 hours before and after peak), and a disclaimer
@@ -126,7 +126,7 @@ The project deploys as three Railway services:
 | `APP_URL` | Frontend URL (for confirmation/unsubscribe links) |
 | `FEEDBACK_EMAIL` | Inbox that receives feedback form submissions (default: `info@kingtidealert.com`) |
 | `HEALTHCHECK_PING_URL` | Optional. Ping URL of a [healthchecks.io](https://healthchecks.io) check. The daily job pings it on start, success and failure so a missed run triggers an email. Empty disables. |
-| `NOAA_STATION_ID` | NOAA station (default: `9414806` — Sausalito) |
+| `NOAA_STATION_ID` | NOAA station (default: `9414290` — San Francisco, Golden Gate) |
 | `KING_TIDE_THRESHOLD` | Alert threshold in MLLW ft (default: `6.0`) |
 | `KING_TIDE_HEIGHT` | King tide label threshold in MLLW ft (default: `6.5`) |
 | `ENVIRONMENT` | Set to `production` to enable the scheduler |
@@ -152,8 +152,4 @@ The project deploys as three Railway services:
 
 ## Data source
 
-Tide predictions come from the [NOAA CO-OPS API](https://tidesandcurrents.noaa.gov/api/) — free, public, no auth required. The station is Sausalito (`9414806`), using the MLLW datum so heights represent absolute feet above mean lower low water.
-
-## Acknowledgments
-
-This project was built with the help of [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding assistant.
+Tide predictions come from the [NOAA CO-OPS API](https://tidesandcurrents.noaa.gov/api/) — free, public, no auth required. The station is San Francisco at the Golden Gate (`9414290`): the nearest gauge with live observations, and the reference Marin County and Caltrans use for flooding at Manzanita. Heights use the MLLW datum, so they represent feet above mean lower low water at that gauge.

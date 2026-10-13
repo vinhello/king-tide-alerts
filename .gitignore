@@ -1,4 +1,4 @@
-# Claude Code
+# Local agent config (not tracked)
 .claude/
 CLAUDE.md
 
@@ -40,5 +40,5 @@ htmlcov/
 # Build
 *.log
 
-# Claude Code local settings
+# Local agent settings
 .claude/settings.local.json
