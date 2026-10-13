@@ -27,22 +27,21 @@ async def resend_webhook(request: Request, db: Session = Depends(get_db)):
 
     # The signature covers the raw body; it must not be re-serialized.
     payload = (await request.body()).decode("utf-8", errors="replace")
-    headers = {
-        "id": request.headers.get("svix-id", ""),
-        "timestamp": request.headers.get("svix-timestamp", ""),
-        "signature": request.headers.get("svix-signature", ""),
+    svix_id = request.headers.get("svix-id", "")
+    options: resend.VerifyWebhookOptions = {
+        "payload": payload,
+        "headers": {
+            "id": svix_id,
+            "timestamp": request.headers.get("svix-timestamp", ""),
+            "signature": request.headers.get("svix-signature", ""),
+        },
+        "webhook_secret": settings.RESEND_WEBHOOK_SECRET,
     }
     try:
-        event = resend.Webhooks.verify(
-            {
-                "payload": payload,
-                "headers": headers,
-                "webhook_secret": settings.RESEND_WEBHOOK_SECRET,
-            }
-        )
+        event = resend.Webhooks.verify(options)
     except ValueError as e:
         logger.warning(f"Rejected Resend webhook: {e}")
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    result = email_events.record_event(db, svix_id=headers["id"], event=event)
+    result = email_events.record_event(db, svix_id=svix_id, event=event)
     return {"status": "ok", "result": result}
