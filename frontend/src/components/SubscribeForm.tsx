@@ -4,6 +4,7 @@ import { CheckCircle, Loader2 } from "lucide-react";
 import type { NotificationPreference, SubscribeRequest } from "../types";
 import { resendConfirmation, subscribe } from "../services/api";
 import { getSignupSource } from "../services/attribution";
+import { EVENTS, trackEvent } from "../services/analytics";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -30,6 +31,7 @@ export default function SubscribeForm({ compact = false }: SubscribeFormProps) {
     try {
       await resendConfirmation(email);
       setResendStatus("sent");
+      trackEvent(EVENTS.resendConfirmation);
     } catch {
       setResendStatus("failed");
     }
@@ -58,6 +60,7 @@ export default function SubscribeForm({ compact = false }: SubscribeFormProps) {
     try {
       await subscribe(data);
       setStatus("success");
+      trackEvent(EVENTS.subscribe, { channel: preference });
     } catch (err: unknown) {
       setStatus("error");
       if (err && typeof err === "object" && "response" in err) {

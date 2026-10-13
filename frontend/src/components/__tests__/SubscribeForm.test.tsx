@@ -115,3 +115,29 @@ describe("SubscribeForm resend link", () => {
     expect(resendConfirmation).toHaveBeenCalledWith("test@example.com");
   });
 });
+
+describe("SubscribeForm analytics", () => {
+  it("records a Subscribe event after a successful signup", async () => {
+    const user = userEvent.setup();
+    window.plausible = vi.fn();
+    vi.mocked(subscribe).mockResolvedValueOnce({
+      id: "123",
+      name: "Test",
+      email: "test@example.com",
+      phone: null,
+      notification_preference: "email",
+      confirmed: false,
+      created_at: new Date().toISOString(),
+    });
+
+    renderWithRouter(<SubscribeForm />);
+    await user.type(screen.getByLabelText(/name/i), "Test");
+    await user.type(screen.getByLabelText(/email/i), "test@example.com");
+    await user.click(screen.getByRole("button", { name: /subscribe/i }));
+
+    await waitFor(() => {
+      expect(window.plausible).toHaveBeenCalledWith("Subscribe", { props: { channel: "email" } });
+    });
+    delete window.plausible;
+  });
+});

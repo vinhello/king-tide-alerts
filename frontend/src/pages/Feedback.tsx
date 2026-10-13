@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { submitFeedback } from "../services/api";
+import { EVENTS, trackEvent } from "../services/analytics";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -46,6 +47,7 @@ export default function Feedback() {
         website: website || undefined,
       });
       setStatus("success");
+      trackEvent(EVENTS.feedbackSent);
     } catch (err: unknown) {
       setStatus("error");
       setErrorMessage(errorMessageFor(err));
