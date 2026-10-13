@@ -18,7 +18,6 @@ from app.schemas.tide import (
     UpcomingTidesResponse,
 )
 from app.services.ics_generator import generate_ics
-from app.services.tide_residual import get_residual_summary
 from app.services.noaa import (
     fetch_current_water_level,
     fetch_hourly_tide_predictions,
@@ -168,7 +167,6 @@ async def current_tide():
         )
 
     next_high = await fetch_next_high_tide()
-    residual = await get_residual_summary()
 
     height = current["height"]
     if height >= settings.KING_TIDE_THRESHOLD:
@@ -204,8 +202,4 @@ async def current_tide():
         hours_until_high_tide=hours_until_high_tide,
         status=status,
         threshold=settings.KING_TIDE_THRESHOLD,
-        residual_ft=residual.mean_residual_ft if residual else None,
-        residual_window_days=residual.window_days if residual else None,
-        residual_sample_hours=residual.sample_hours if residual else None,
-        residual_as_of=residual.as_of if residual else None,
     )

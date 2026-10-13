@@ -6,7 +6,6 @@ from twilio.rest import Client as TwilioClient
 
 from app.config import settings
 from app.models.subscriber import NotificationPreference, Subscriber
-from app.services.tide_residual import ResidualSummary
 from app.utils.email_templates import (
     confirmation_email,
     confirmation_sms,
@@ -81,7 +80,6 @@ async def send_king_tide_alert(
     peak_datetime: datetime,
     peak_height: float,
     days_until: int,
-    residual: ResidualSummary | None = None,
 ) -> None:
     """Send a high tide / king tide alert based on subscriber preference.
 
@@ -92,7 +90,6 @@ async def send_king_tide_alert(
         peak_datetime: Datetime of the peak tide in the period.
         peak_height: Height of the peak tide in feet.
         days_until: Days until the period starts.
-        residual: Measured recent observed-minus-predicted summary, or None to omit.
     """
     unsubscribe_url = f"{settings.APP_URL}/unsubscribe/{subscriber.unsubscribe_token}"
     is_king_tide = peak_height >= settings.KING_TIDE_HEIGHT
@@ -135,7 +132,6 @@ async def send_king_tide_alert(
                 is_multi_day=is_multi_day,
                 days_until=days_until,
                 unsubscribe_url=unsubscribe_url,
-                residual=residual,
             )
             subject = f"🌊 {alert_label} Alert — {days_until} days away"
             await send_email(subscriber.email, subject, html)

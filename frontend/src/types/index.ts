@@ -80,11 +80,6 @@ export interface CurrentTideStatus {
   hours_until_high_tide: number | null;
   status: "safe" | "caution" | "flooded";
   threshold: number;
-  /** Measured mean of observed minus predicted over the trailing window; null when unavailable. */
-  residual_ft?: number | null;
-  residual_window_days?: number | null;
-  residual_sample_hours?: number | null;
-  residual_as_of?: string | null;
 }
 
 // Admin types

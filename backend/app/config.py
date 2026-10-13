@@ -30,9 +30,6 @@ class Settings(BaseSettings):
     FEEDBACK_MAX_SUBJECT_LENGTH: int = 200
     DONATION_MIN_CENTS: int = 100
     DONATION_MAX_CENTS: int = 50000
-    # Measured observed-minus-predicted water level shown to users (not a forecast).
-    RESIDUAL_WINDOW_DAYS: int = 30
-    RESIDUAL_CACHE_SECONDS: int = 3600
     # Dead man's switch for the daily job (healthchecks.io ping URL). Empty disables.
     HEALTHCHECK_PING_URL: str = ""
 
