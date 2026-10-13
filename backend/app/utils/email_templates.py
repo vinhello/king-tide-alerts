@@ -7,7 +7,7 @@ def confirmation_email(name: str, confirm_url: str) -> str:
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #1a365d;">King Tide Alerts</h1>
         <p>Hi {name},</p>
-        <p>Thanks for subscribing to King Tide Alerts for the SF Bay Area! Please confirm your subscription by clicking the button below:</p>
+        <p>Thanks for subscribing to King Tide Alert. It's free, and you can unsubscribe any time. Please confirm your subscription by clicking the button below:</p>
         <a href="{confirm_url}" style="display: inline-block; background-color: #2b6cb0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">Confirm Subscription</a>
         <p>Once confirmed, you'll receive alerts when high tides are forecasted that could cause flooding on low-lying areas and bike paths in Sausalito.</p>
         <p>Visit <a href="https://kingtidealert.com" style="color: #2b6cb0;">kingtidealert.com</a> to view upcoming tides.</p>
@@ -157,9 +157,9 @@ def confirmation_reminder_email(name: str, confirm_url: str, signed_up: str) -> 
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #1a365d;">King Tide Alert</h1>
         <p>Hi {safe_name},</p>
-        <p>You signed up for King Tide Alert on {safe_date}, but the subscription was never confirmed, so no alerts are going to this address yet. King tide season on the Mill Valley–Sausalito path runs November through February.</p>
+        <p>You signed up for King Tide Alert on {safe_date}, but the subscription was never confirmed, so no alerts are reaching this address yet.</p>
+        <p>King Tide Alert is free. Once you confirm, you'll get an email 7 days and again 48 hours before any tide high enough to flood the Mill Valley–Sausalito path. King tide season runs November through February, with the first big tides in late November.</p>
         <a href="{confirm_url}" style="display: inline-block; background-color: #2b6cb0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">Confirm Subscription</a>
-        <p>Once confirmed, you'll get an email 7 days and 48 hours before tides high enough to flood the path.</p>
         <p style="color: #718096; font-size: 14px;">If you didn't sign up, ignore this email. Nothing further will be sent.</p>
     </body>
     </html>

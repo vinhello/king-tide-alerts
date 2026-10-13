@@ -113,3 +113,13 @@ def test_reminder_template_escapes_and_links():
     assert "&lt;b&gt;Vince&lt;/b&gt;" in html
     assert "https://x/confirm/t" in html
     assert "October 3, 2026" in html
+    assert "King Tide Alert is free" in html
+    assert "and nothing else" not in html
+
+
+def test_confirmation_email_says_free():
+    from app.utils.email_templates import confirmation_email
+
+    html = confirmation_email("Vince", "https://x/confirm/t")
+    assert "It's free, and you can unsubscribe any time" in html
+    assert "King Tide Alerts for the SF Bay Area" not in html
