@@ -59,8 +59,15 @@ async def stripe_webhook(request: Request):
     except stripe.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        logger.info(f"Payment received: {session.get('amount_total', 0) / 100:.2f} USD")
+    # Signature is verified above. Everything after this point is bookkeeping,
+    # so it must never fail the request: a non-2xx makes Stripe retry for days.
+    try:
+        if event["type"] == "checkout.session.completed":
+            session = event["data"]["object"]
+            # Stripe objects support item access but are not dicts (no .get()).
+            amount_cents = session["amount_total"] or 0
+            logger.info(f"Payment received: {amount_cents / 100:.2f} USD")
+    except Exception as e:
+        logger.error(f"Stripe webhook handled but not recorded ({event['type']}): {e}")
 
     return {"status": "ok"}
