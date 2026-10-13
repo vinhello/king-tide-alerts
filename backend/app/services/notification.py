@@ -8,6 +8,7 @@ from app.config import settings
 from app.models.subscriber import NotificationPreference, Subscriber
 from app.utils.email_templates import (
     confirmation_email,
+    confirmation_reminder_email,
     confirmation_sms,
     feedback_email,
     king_tide_alert_email,
@@ -209,4 +210,16 @@ async def send_feedback(
         f"[King Tide Alert feedback] {subject_line}",
         html,
         reply_to=reply_email,
+    )
+
+
+async def send_confirmation_reminder(subscriber: Subscriber) -> None:
+    """Email a one-time reminder to confirm. Email subscribers only."""
+    if not subscriber.email:
+        return
+    confirm_url = f"{settings.APP_URL}/confirm/{subscriber.unsubscribe_token}"
+    signed_up = subscriber.created_at.strftime("%B %-d, %Y")
+    html = confirmation_reminder_email(subscriber.name, confirm_url, signed_up)
+    await send_email(
+        subscriber.email, "Reminder: confirm your King Tide Alert subscription", html
     )

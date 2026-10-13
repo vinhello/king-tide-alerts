@@ -78,3 +78,21 @@ class AlertRunPreview(BaseModel):
     alerts: list[PlannedAlert]
     sample_subject: Optional[str]
     sample_email_html: Optional[str]
+
+
+class NudgeRecipient(BaseModel):
+    name: str
+    email: str
+    signed_up: datetime
+
+
+class NudgeResult(BaseModel):
+    """Outcome of a nudge run. dry_run=True means nothing was sent."""
+
+    dry_run: bool
+    window_days: int
+    recipient_count: int
+    recipients: list[NudgeRecipient]
+    sent: int
+    sample_subject: Optional[str]
+    sample_email_html: Optional[str]

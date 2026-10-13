@@ -8,6 +8,8 @@ import type {
   FeedbackResponse,
   HistoryResponse,
   NotificationStats,
+  NudgeResult,
+  ResendConfirmationResponse,
   SubscribeRequest,
   SubscriberResponse,
   SubscriberStats,
@@ -40,6 +42,16 @@ export async function unsubscribe(
 ): Promise<UnsubscribeResponse> {
   const response = await api.get<UnsubscribeResponse>(
     `/api/unsubscribe/${token}`
+  );
+  return response.data;
+}
+
+export async function resendConfirmation(
+  email: string
+): Promise<ResendConfirmationResponse> {
+  const response = await api.post<ResendConfirmationResponse>(
+    "/api/resend-confirmation",
+    { email }
   );
   return response.data;
 }
@@ -105,6 +117,20 @@ export async function getNotificationStats(apiKey: string): Promise<Notification
 
 export async function getAdminEvents(apiKey: string): Promise<AdminEvent[]> {
   const response = await api.get<AdminEvent[]>("/api/admin/events", adminHeaders(apiKey));
+  return response.data;
+}
+
+export async function nudgeUnconfirmed(
+  apiKey: string,
+  dryRun: boolean,
+  days: number = 30
+): Promise<NudgeResult> {
+  const params = new URLSearchParams({ dry_run: String(dryRun), days: String(days) });
+  const response = await api.post<NudgeResult>(
+    `/api/admin/nudge-unconfirmed?${params.toString()}`,
+    null,
+    adminHeaders(apiKey)
+  );
   return response.data;
 }
 
