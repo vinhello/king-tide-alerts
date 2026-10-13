@@ -1,0 +1,63 @@
+{
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7374cb4e75b6119f05b7d827e0a4bdc6f319ae54.002.1",
+      "properties": {
+        "id": "urn:oid:2.49.0.1.840.0.7374cb4e75b6119f05b7d827e0a4bdc6f319ae54.002.1",
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7374cb4e75b6119f05b7d827e0a4bdc6f319ae54.002.1",
+        "event": "Coastal Flood Advisory",
+        "severity": "Minor",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "status": "Actual",
+        "messageType": "Update",
+        "headline": "Coastal Flood Advisory issued October 13 at 4:57AM PDT until October 13 at 3:00PM PDT by NWS San Francisco CA",
+        "description": "* WHAT...Up to 1.1 ft of inundation above ground level is\npossible in low-lying areas near shorelines and tidal\nwaterways.\n\n* WHERE...San Francisco, Northern Monterey Bay and Southern\nMonterey Bay and Big Sur Coast Counties.\n\n* WHEN...For the Coastal Flood Advisory, until 3 PM PDT Tuesday.\nFor the Beach Hazards Statement, until 10 PM PDT this evening.\n\n* IMPACTS...High tides will result in flooding of low-lying\ninfrastructure, isolated road closures, and coastal erosion.\nRising tides will bring water and waves farther up the beach\nthan normal, restricting escape from beaches and coastal\nareas.\n\n* ADDITIONAL DETAILS...At the San Francisco tidal gauge, high\ntide is expected to be 1.1 ft above normal (6.90 ft MLLW) at\n1:14 PM Tuesday 10/13. These predictions include up to 1.0 ft\nof surge that will enhance the astronomical tide and flooding\nthreat. High tide varies up to 90 minutes earlier or later\nalong the Pacific Coast and through the San Francisco Bay,\nrespectively.",
+        "instruction": "If travel is required, allow extra time as some roads may be\nclosed. Do not drive around barricades or through water of\nunknown depth. Take the necessary actions to protect flood-prone\nproperty.",
+        "onset": "2026-10-13T04:57:00-07:00",
+        "effective": "2026-10-13T04:57:00-07:00",
+        "expires": "2026-10-13T15:00:00-07:00",
+        "ends": "2026-10-13T15:00:00-07:00",
+        "sent": "2026-10-13T04:57:00-07:00",
+        "senderName": "NWS San Francisco CA",
+        "areaDesc": "San Francisco; San Francisco Bay Shoreline; Northern Monterey Bay; Southern Monterey Bay and Big Sur Coast",
+        "geocode": {
+          "UGC": [
+            "CAZ006",
+            "CAZ508",
+            "CAZ529",
+            "CAZ530"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7374cb4e75b6119f05b7d827e0a4bdc6f319ae54.001.1",
+      "properties": {
+        "id": "urn:oid:2.49.0.1.840.0.7374cb4e75b6119f05b7d827e0a4bdc6f319ae54.001.1",
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7374cb4e75b6119f05b7d827e0a4bdc6f319ae54.001.1",
+        "event": "Coastal Flood Advisory",
+        "severity": "Minor",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "status": "Actual",
+        "messageType": "Update",
+        "headline": "Coastal Flood Advisory issued October 13 at 4:57AM PDT until October 14 at 4:00PM PDT by NWS San Francisco CA",
+        "description": "* WHAT...Up to 1.1 ft of inundation above ground level is\npossible in low-lying areas near shorelines and tidal\nwaterways.\n\n* WHERE...Bayshore locations along the San Pablo Bay.\n\n* WHEN...Until 4 PM PDT Wednesday.\n\n* IMPACTS...Flooding of lots, parks, and roads with only\nisolated road closures expected. High tides will result in\nflooding along coastal trails, cut off access to some low-\nlying beaches and coastal areas, and bring water and waves\nfarther up the beach than typical. Dangerous conditions are\nforecast along the shoreline. Hazards include sneaker waves,\nstrong rip currents, and large breaking waves.\n\n* ADDITIONAL DETAILS...At the San Francisco tidal gauge, high\ntide is expected to be 1.1 ft above normal (6.90 ft MLLW) at\n1:14 PM Tuesday 10/13, and 0.9 ft above normal (6.72 ft MLLW)\nat 1:46 PM Wednesday 10/14. These predictions include up to\n1.0 ft of surge that will enhance the astronomical tide and\nflooding threat. High tide varies up to 90 minutes earlier or\nlater along the Pacific Coast and through the San Francisco\nBay, respectively.",
+        "instruction": "If travel is required, allow extra time as some roads may be\nclosed. Do not drive around barricades or through water of\nunknown depth. Take the necessary actions to protect flood-prone\nproperty.",
+        "onset": "2026-10-13T04:57:00-07:00",
+        "effective": "2026-10-13T04:57:00-07:00",
+        "expires": "2026-10-13T15:00:00-07:00",
+        "ends": "2026-10-14T16:00:00-07:00",
+        "sent": "2026-10-13T04:57:00-07:00",
+        "senderName": "NWS San Francisco CA",
+        "areaDesc": "North Bay Interior Valleys",
+        "geocode": {
+          "UGC": [
+            "CAZ506"
+          ]
+        }
+      }
+    }
+  ]
+}

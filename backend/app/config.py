@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     # San Francisco (Golden Gate). Nearest gauge with live observations and the
     # reference Marin County and Caltrans use for flooding at Manzanita.
     NOAA_STATION_ID: str = "9414290"
+    # NWS forecast zones the Mill Valley–Sausalito path straddles: Coastal
+    # North Bay, North Bay Interior Valleys, San Francisco Bay Shoreline.
+    NWS_ZONES: str = "CAZ505,CAZ506,CAZ508"
+    # api.weather.gov requires a User-Agent that names the app and a contact.
+    NWS_USER_AGENT: str = "KingTideAlert/1.0 (info@kingtidealert.com)"
+    NWS_CACHE_SECONDS: int = 600
     KING_TIDE_THRESHOLD: float = 6.0
     KING_TIDE_HEIGHT: float = 6.5
     ADMIN_API_KEY: str = ""
