@@ -1,3 +1,5 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -10,6 +12,27 @@ from app.main import app
 
 # Set admin password for tests
 settings.ADMIN_PASSWORD = "test-password"
+
+
+@pytest.fixture(autouse=True)
+def no_residual_lookup():
+    """Keep tests off the network: the residual lookup is stubbed to None.
+
+    Tests that exercise the residual path patch the same targets themselves.
+    """
+    from app.services import tide_residual
+
+    tide_residual.clear_cache()
+    with (
+        patch("app.routers.tides.get_residual_summary", new_callable=AsyncMock, return_value=None),
+        patch(
+            "app.services.king_tide_detector.get_residual_summary",
+            new_callable=AsyncMock,
+            return_value=None,
+        ),
+    ):
+        yield
+    tide_residual.clear_cache()
 
 
 # Use SQLite in-memory for tests

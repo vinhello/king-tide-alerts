@@ -9,6 +9,7 @@ from app.models.king_tide_event import KingTideEvent
 from app.models.notification_sent import NotificationSent, NotificationType
 from app.models.subscriber import Subscriber
 from app.services import noaa, notification
+from app.services.tide_residual import ResidualSummary, get_residual_summary
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,7 @@ async def send_alerts(db: Session) -> None:
         return
 
     periods = _group_into_periods(upcoming_events)
+    residual = await get_residual_summary()
     seven_day_count = 0
     forty_eight_hour_count = 0
 
@@ -170,6 +172,7 @@ async def send_alerts(db: Session) -> None:
                     period=period,
                     days_until=days_until,
                     notification_type=NotificationType.SEVEN_DAY_ALERT,
+                    residual=residual,
                 )
                 # Mark all events in period as alerted
                 db.query(KingTideEvent).filter(
@@ -197,6 +200,7 @@ async def send_alerts(db: Session) -> None:
                     period=period,
                     days_until=days_until,
                     notification_type=NotificationType.FORTY_EIGHT_HOUR_REMINDER,
+                    residual=residual,
                 )
                 db.query(KingTideEvent).filter(
                     KingTideEvent.id.in_(period.event_ids)
@@ -219,6 +223,7 @@ async def _send_period_alert(
     period: TidePeriod,
     days_until: int,
     notification_type: NotificationType,
+    residual: ResidualSummary | None = None,
 ) -> None:
     """Send one alert per subscriber for a tide period.
 
@@ -263,6 +268,7 @@ async def _send_period_alert(
             peak_datetime=period.peak_datetime,
             peak_height=period.peak_height,
             days_until=days_until,
+            residual=residual,
         )
 
         db.add(

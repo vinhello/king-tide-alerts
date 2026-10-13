@@ -75,3 +75,48 @@ describe("CurrentTideStatus", () => {
     expect(container.firstChild).toBeNull();
   });
 });
+
+describe("CurrentTideStatus measured residual line", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("shows the measured line when the API provides a residual", async () => {
+    vi.mocked(getCurrentTideStatus).mockResolvedValueOnce({
+      ...safeTideData,
+      residual_ft: 0.77,
+      residual_window_days: 30,
+      residual_sample_hours: 714,
+      residual_as_of: "2026-10-12",
+    });
+    render(<CurrentTideStatus />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/past 30 days/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/averaged 0\.8 ft above NOAA predictions/i)).toBeInTheDocument();
+  });
+
+  it("says below when the residual is negative", async () => {
+    vi.mocked(getCurrentTideStatus).mockResolvedValueOnce({
+      ...safeTideData,
+      residual_ft: -0.3,
+      residual_window_days: 30,
+    });
+    render(<CurrentTideStatus />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/averaged 0\.3 ft below/i)).toBeInTheDocument();
+    });
+  });
+
+  it("omits the line when the residual is unavailable", async () => {
+    vi.mocked(getCurrentTideStatus).mockResolvedValueOnce({ ...safeTideData, residual_ft: null });
+    render(<CurrentTideStatus />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Safe to Ride")).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/past 30 days/i)).not.toBeInTheDocument();
+  });
+});
