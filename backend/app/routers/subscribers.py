@@ -46,19 +46,6 @@ async def subscribe(
     if data.email:
         existing = db.query(Subscriber).filter(Subscriber.email == data.email).first()
         if existing:
-            if existing.unsubscribed_at is not None:
-                # Came back after unsubscribing: reactivate the same record as a
-                # fresh, unconfirmed signup and record where it came from.
-                existing.unsubscribed_at = None
-                existing.confirmed = False
-                existing.confirmed_at = None
-                existing.name = data.name
-                existing.notification_preference = data.notification_preference
-                _apply_signup_source(existing, data)
-                db.commit()
-                db.refresh(existing)
-                background_tasks.add_task(send_confirmation, existing)
-                return existing
             if existing.confirmed:
                 raise HTTPException(status_code=400, detail="Email already subscribed")
             # Signed up before but never confirmed: resend rather than dead-end.
@@ -122,9 +109,16 @@ def _unsubscribe(token: str, db: Session) -> UnsubscribeResponse:
     if not subscriber:
         raise HTTPException(status_code=404, detail="Invalid unsubscribe token")
 
-    # Keep the row: churn stays measurable and a later signup reactivates it.
+    # Privacy policy: personal data is deleted on unsubscribe. The row stays
+    # only as an anonymous record (dates and signup source) so churn can be
+    # counted. The token is kept so a repeated click on the same link is
+    # still a quiet success rather than an error; it identifies nothing.
     if subscriber.unsubscribed_at is None:
         subscriber.unsubscribed_at = datetime.now(timezone.utc)
+        subscriber.confirmed = False
+        subscriber.name = ""
+        subscriber.email = None
+        subscriber.phone = None
         db.commit()
 
     return UnsubscribeResponse(

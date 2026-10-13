@@ -193,28 +193,37 @@ def test_confirm_subscription(client, test_db):
     assert subscriber.confirmed is True
 
 
-def test_unsubscribe_keeps_row_and_is_idempotent(client, test_db):
-    """Unsubscribing records when, keeps the record, and can be repeated safely."""
+def test_unsubscribe_erases_personal_data_and_is_idempotent(client, test_db):
+    """Unsubscribing deletes name, email and phone, keeps an anonymous record, and repeats safely."""
     from app.models.subscriber import Subscriber
 
     with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
         client.post(
             "/api/subscribe",
-            json={"name": "Test", "email": "bye@example.com", "notification_preference": "email"},
+            json={
+                "name": "Test", "email": "bye@example.com", "notification_preference": "email",
+                "signup_utm_source": "nextdoor",
+            },
         )
     sub = test_db.query(Subscriber).filter(Subscriber.email == "bye@example.com").first()
+    token = sub.unsubscribe_token
 
-    first = client.get(f"/api/unsubscribe/{sub.unsubscribe_token}")
+    first = client.get(f"/api/unsubscribe/{token}")
     assert first.status_code == 200
     test_db.refresh(sub)
     assert sub.unsubscribed_at is not None
+    assert sub.email is None and sub.phone is None and sub.name == ""
+    assert sub.confirmed is False
+    # Anonymous record survives for counting
+    assert sub.signup_utm_source == "nextdoor"
+    assert sub.created_at is not None
     stamp = sub.unsubscribed_at
 
-    second = client.get(f"/api/unsubscribe/{sub.unsubscribe_token}")
+    second = client.get(f"/api/unsubscribe/{token}")
     assert second.status_code == 200
     test_db.refresh(sub)
     assert sub.unsubscribed_at == stamp
-    assert test_db.query(Subscriber).filter(Subscriber.email == "bye@example.com").count() == 1
+    assert test_db.query(Subscriber).count() == 1
 
 
 def test_unsubscribe_invalid_token(client):
@@ -294,7 +303,8 @@ def test_confirm_after_unsubscribe_is_refused(client, test_db):
     assert sub.confirmed is False and sub.unsubscribed_at is not None
 
 
-def test_resubscribe_after_unsubscribe_reactivates_same_row(client, test_db):
+def test_resubscribe_after_unsubscribe_creates_fresh_record(client, test_db):
+    """After unsubscribing, signing up again starts over: a new row, the old one stays anonymous."""
     from app.models.subscriber import Subscriber
 
     with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock) as mock_send:
@@ -302,27 +312,24 @@ def test_resubscribe_after_unsubscribe_reactivates_same_row(client, test_db):
             "/api/subscribe",
             json={"name": "Old Name", "email": "back@example.com", "notification_preference": "email"},
         )
-        sub = test_db.query(Subscriber).filter(Subscriber.email == "back@example.com").first()
-        client.get(f"/api/confirm/{sub.unsubscribe_token}")
-        client.get(f"/api/unsubscribe/{sub.unsubscribe_token}")
+        old = test_db.query(Subscriber).filter(Subscriber.email == "back@example.com").first()
+        old_id = old.id
+        client.get(f"/api/confirm/{old.unsubscribe_token}")
+        client.get(f"/api/unsubscribe/{old.unsubscribe_token}")
         mock_send.reset_mock()
 
         response = client.post(
             "/api/subscribe",
-            json={
-                "name": "New Name", "email": "back@example.com", "notification_preference": "email",
-                "signup_utm_source": "flyer",
-            },
+            json={"name": "New Name", "email": "back@example.com", "notification_preference": "email"},
         )
 
     assert response.status_code == 201
-    assert response.json()["id"] == str(sub.id)
-    assert test_db.query(Subscriber).filter(Subscriber.email == "back@example.com").count() == 1
-    test_db.refresh(sub)
-    assert sub.unsubscribed_at is None
-    assert sub.confirmed is False and sub.confirmed_at is None
-    assert sub.name == "New Name"
-    assert sub.signup_utm_source == "flyer"
+    assert response.json()["id"] != str(old_id)
+    assert test_db.query(Subscriber).count() == 2
+    fresh = test_db.query(Subscriber).filter(Subscriber.email == "back@example.com").one()
+    assert fresh.confirmed is False and fresh.unsubscribed_at is None
+    old = test_db.get(Subscriber, old_id)
+    assert old.email is None and old.unsubscribed_at is not None
     mock_send.assert_called_once()
 
 

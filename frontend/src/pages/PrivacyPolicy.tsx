@@ -30,6 +30,11 @@ export default function PrivacyPolicy() {
                 <strong>Phone number:</strong> Used to send SMS alerts (if you
                 choose SMS notifications)
               </li>
+              <li>
+                <strong>How you found us:</strong> The referring page or campaign
+                link you arrived from, if any, and the page you landed on. Used only
+                to understand which channels bring people to the service.
+              </li>
             </ul>
 
             <h2>How We Use Your Data</h2>
@@ -75,8 +80,11 @@ export default function PrivacyPolicy() {
             <h2>Data Retention</h2>
             <p>
               We retain your subscription information only while your subscription
-              is active. When you unsubscribe, your data is permanently deleted
-              from our systems.
+              is active. When you unsubscribe, we stop sending immediately and
+              permanently delete your name, email address and phone number. We
+              keep only an anonymous record of when you signed up, how you found
+              us, and when you unsubscribed, so we can understand how the service
+              is used. That record cannot be linked back to you.
             </p>
 
             <h2>Your Rights</h2>
@@ -89,7 +97,7 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong>Request deletion:</strong> Unsubscribing automatically
-                deletes all your data
+                deletes your personal information
               </li>
             </ul>
 
