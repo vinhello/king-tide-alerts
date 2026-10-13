@@ -124,6 +124,7 @@ The project deploys as three Railway services:
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `ADMIN_API_KEY` | API key for admin endpoints (e.g. test-alert) |
 | `APP_URL` | Frontend URL (for confirmation/unsubscribe links) |
+| `PUBLIC_API_URL` | This backend's public URL (no trailing slash). Enables RFC 8058 one-click unsubscribe headers on alert emails. Empty disables the one-click header. |
 | `FEEDBACK_EMAIL` | Inbox that receives feedback form submissions (default: `info@kingtidealert.com`) |
 | `HEALTHCHECK_PING_URL` | Optional. Ping URL of a [healthchecks.io](https://healthchecks.io) check. The daily job pings it on start, success and failure so a missed run triggers an email. Empty disables. |
 | `NOAA_STATION_ID` | NOAA station (default: `9414290` — San Francisco, Golden Gate) |

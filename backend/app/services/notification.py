@@ -23,7 +23,11 @@ def _get_twilio_client() -> TwilioClient:
 
 
 async def send_email(
-    to: str, subject: str, html: str, reply_to: str | None = None
+    to: str,
+    subject: str,
+    html: str,
+    reply_to: str | None = None,
+    headers: dict[str, str] | None = None,
 ) -> None:
     """Send an email via Resend. Respects the NOTIFICATIONS_ENABLED switch."""
     if not settings.NOTIFICATIONS_ENABLED:
@@ -39,6 +43,8 @@ async def send_email(
         }
         if reply_to:
             params["reply_to"] = reply_to
+        if headers:
+            params["headers"] = headers
         resend.Emails.send(params)
         logger.info(f"Email sent to {to}")
     except Exception as e:
@@ -175,7 +181,12 @@ async def send_king_tide_alert(
                 days_until=days_until,
                 unsubscribe_url=unsubscribe_url,
             )
-            await send_email(subscriber.email, subject, html)
+            await send_email(
+                subscriber.email,
+                subject,
+                html,
+                headers=unsubscribe_headers(subscriber.unsubscribe_token),
+            )
 
     if pref in (NotificationPreference.SMS, NotificationPreference.BOTH):
         if subscriber.phone:
@@ -223,3 +234,19 @@ async def send_confirmation_reminder(subscriber: Subscriber) -> None:
     await send_email(
         subscriber.email, "Reminder: confirm your King Tide Alert subscription", html
     )
+
+
+def unsubscribe_headers(token: str) -> dict[str, str]:
+    """RFC 8058 headers so mail clients can offer one-click unsubscribe.
+
+    The one-click target must accept a POST with no further interaction,
+    which the API's unsubscribe endpoint does. Without a public API URL the
+    header points at the site page and the one-click marker is omitted.
+    """
+    api_base = settings.PUBLIC_API_URL.rstrip("/")
+    if api_base:
+        return {
+            "List-Unsubscribe": f"<{api_base}/api/unsubscribe/{token}>",
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        }
+    return {"List-Unsubscribe": f"<{settings.APP_URL}/unsubscribe/{token}>"}

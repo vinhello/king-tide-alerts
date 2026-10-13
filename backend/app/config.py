@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     STRIPE_API_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     APP_URL: str = "http://localhost:5173"
+    # Public URL of this API (no trailing slash). Used for one-click unsubscribe
+    # headers, which must point at an endpoint that accepts POST. Empty disables
+    # the one-click header; the human link to the site page is always included.
+    PUBLIC_API_URL: str = ""
     # San Francisco (Golden Gate). Nearest gauge with live observations and the
     # reference Marin County and Caltrans use for flooding at Manzanita.
     NOAA_STATION_ID: str = "9414290"

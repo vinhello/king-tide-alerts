@@ -115,8 +115,7 @@ async def confirm_subscription(token: str, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/unsubscribe/{token}", response_model=UnsubscribeResponse)
-async def unsubscribe(token: str, db: Session = Depends(get_db)):
+def _unsubscribe(token: str, db: Session) -> UnsubscribeResponse:
     subscriber = (
         db.query(Subscriber).filter(Subscriber.unsubscribe_token == token).first()
     )
@@ -131,6 +130,19 @@ async def unsubscribe(token: str, db: Session = Depends(get_db)):
     return UnsubscribeResponse(
         message="You've been unsubscribed from King Tide Alerts."
     )
+
+
+@router.get("/unsubscribe/{token}", response_model=UnsubscribeResponse)
+async def unsubscribe(token: str, db: Session = Depends(get_db)):
+    """Unsubscribe via the link in an email (used by the website page)."""
+    return _unsubscribe(token, db)
+
+
+@router.post("/unsubscribe/{token}", response_model=UnsubscribeResponse)
+async def unsubscribe_one_click(token: str, db: Session = Depends(get_db)):
+    """RFC 8058 one-click unsubscribe: mail clients POST here from the
+    List-Unsubscribe header with no further interaction."""
+    return _unsubscribe(token, db)
 
 
 @router.post("/resend-confirmation", response_model=ResendConfirmationResponse)
