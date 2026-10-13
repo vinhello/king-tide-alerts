@@ -24,6 +24,16 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 
 @pytest.fixture(autouse=True)
+def reset_rate_limits():
+    """Per-client limits would otherwise accumulate across tests."""
+    from app.rate_limit import limiter
+
+    limiter.reset()
+    yield
+    limiter.reset()
+
+
+@pytest.fixture(autouse=True)
 def test_db():
     """Create tables before each test, drop after."""
     # SQLite doesn't support PostgreSQL UUID type, so we need to handle this

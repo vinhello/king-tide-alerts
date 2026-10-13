@@ -44,28 +44,114 @@ def test_subscribe_sms_success(client, test_db):
     assert data["phone"] == "+14155551234"
 
 
-def test_subscribe_duplicate_email_rejected(client, test_db):
-    """Duplicate email should return 400."""
-    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
+def test_subscribe_duplicate_confirmed_email_rejected(client, test_db):
+    """A confirmed address cannot subscribe again."""
+    from app.models.subscriber import Subscriber
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock) as mock_send:
         client.post(
             "/api/subscribe",
-            json={
-                "name": "First",
-                "email": "dupe@example.com",
-                "notification_preference": "email",
-            },
+            json={"name": "Test", "email": "dup@example.com", "notification_preference": "email"},
         )
+        test_db.query(Subscriber).filter(Subscriber.email == "dup@example.com").update(
+            {Subscriber.confirmed: True}
+        )
+        test_db.commit()
+        mock_send.reset_mock()
+
         response = client.post(
             "/api/subscribe",
-            json={
-                "name": "Second",
-                "email": "dupe@example.com",
-                "notification_preference": "email",
-            },
+            json={"name": "Test", "email": "dup@example.com", "notification_preference": "email"},
         )
 
     assert response.status_code == 400
-    assert "already subscribed" in response.json()["detail"].lower()
+    assert response.json()["detail"] == "Email already subscribed"
+    mock_send.assert_not_called()
+
+
+def test_subscribe_unconfirmed_duplicate_resends_confirmation(client, test_db):
+    """Signing up again before confirming resends the email instead of failing."""
+    from app.models.subscriber import Subscriber
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock) as mock_send:
+        first = client.post(
+            "/api/subscribe",
+            json={"name": "Test", "email": "again@example.com", "notification_preference": "email"},
+        )
+        second = client.post(
+            "/api/subscribe",
+            json={"name": "Test", "email": "again@example.com", "notification_preference": "email"},
+        )
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert second.json()["id"] == first.json()["id"]
+    assert mock_send.call_count == 2
+    assert test_db.query(Subscriber).filter(Subscriber.email == "again@example.com").count() == 1
+
+
+def test_resend_confirmation_sends_for_unconfirmed(client, test_db):
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock) as mock_send:
+        client.post(
+            "/api/subscribe",
+            json={"name": "Test", "email": "lost@example.com", "notification_preference": "email"},
+        )
+        mock_send.reset_mock()
+        response = client.post("/api/resend-confirmation", json={"email": "lost@example.com"})
+
+    assert response.status_code == 200
+    assert "on its way" in response.json()["message"]
+    mock_send.assert_called_once()
+    assert mock_send.call_args.args[0].email == "lost@example.com"
+
+
+def test_resend_confirmation_silent_for_confirmed_and_unknown(client, test_db):
+    """Same response, no email, whether the address is confirmed or unknown."""
+    from app.models.subscriber import Subscriber
+
+    test_db.add(
+        Subscriber(
+            name="Done", email="done@example.com", notification_preference="email",
+            unsubscribe_token="tok-done", confirmed=True,
+        )
+    )
+    test_db.commit()
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock) as mock_send:
+        confirmed = client.post("/api/resend-confirmation", json={"email": "done@example.com"})
+        unknown = client.post("/api/resend-confirmation", json={"email": "nobody@example.com"})
+
+    assert confirmed.status_code == 200 and unknown.status_code == 200
+    assert confirmed.json() == unknown.json()
+    mock_send.assert_not_called()
+
+
+def test_resend_confirmation_rejects_invalid_email(client):
+    response = client.post("/api/resend-confirmation", json={"email": "not-an-email"})
+    assert response.status_code == 422
+
+
+def test_resend_confirmation_rate_limited(client):
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
+        for _ in range(3):
+            assert client.post("/api/resend-confirmation", json={"email": "x@example.com"}).status_code == 200
+        limited = client.post("/api/resend-confirmation", json={"email": "x@example.com"})
+    assert limited.status_code == 429
+
+
+def test_subscribe_rate_limited(client):
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
+        for i in range(5):
+            r = client.post(
+                "/api/subscribe",
+                json={"name": "T", "email": f"rl{i}@example.com", "notification_preference": "email"},
+            )
+            assert r.status_code == 201
+        limited = client.post(
+            "/api/subscribe",
+            json={"name": "T", "email": "rl9@example.com", "notification_preference": "email"},
+        )
+    assert limited.status_code == 429
 
 
 def test_subscribe_missing_email_for_email_pref(client):

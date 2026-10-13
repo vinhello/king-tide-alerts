@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle, Loader2 } from "lucide-react";
 import type { NotificationPreference, SubscribeRequest } from "../types";
-import { subscribe } from "../services/api";
+import { resendConfirmation, subscribe } from "../services/api";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -22,6 +22,17 @@ export default function SubscribeForm({ compact = false }: SubscribeFormProps) {
   const [smsConsent, setSmsConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+
+  const handleResend = async () => {
+    setResendStatus("sending");
+    try {
+      await resendConfirmation(email);
+      setResendStatus("sent");
+    } catch {
+      setResendStatus("failed");
+    }
+  };
 
   const showEmail = preference === "email" || preference === "both";
   const showPhone = preference === "sms" || preference === "both";
@@ -70,6 +81,27 @@ export default function SubscribeForm({ compact = false }: SubscribeFormProps) {
           <p className={`text-sm sm:text-base ${compact ? "text-white/80" : "text-muted-foreground"}`}>
             We sent a confirmation {showEmail ? "email" : "message"}. Click the link to activate your alerts.
           </p>
+          {showEmail && (
+            <p className={`text-xs sm:text-sm ${compact ? "text-white/70" : "text-muted-foreground"}`}>
+              {resendStatus === "sent" ? (
+                "Sent again. Check your spam folder too."
+              ) : resendStatus === "failed" ? (
+                "Couldn't resend right now. Please try again in a few minutes."
+              ) : (
+                <>
+                  Didn't get it?{" "}
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendStatus === "sending"}
+                    className={`underline ${compact ? "text-white" : "text-primary"} disabled:opacity-50`}
+                  >
+                    {resendStatus === "sending" ? "Resending..." : "Resend the email"}
+                  </button>
+                </>
+              )}
+            </p>
+          )}
         </div>
       </div>
     );

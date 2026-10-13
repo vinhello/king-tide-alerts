@@ -26,6 +26,7 @@ import {
   getSubscriberStats,
   getNotificationStats,
   getAdminEvents,
+  nudgeUnconfirmed,
   sendTestAlert,
 } from "../services/api";
 import type {
@@ -33,6 +34,7 @@ import type {
   SubscriberStats,
   NotificationStats,
   AdminEvent,
+  NudgeResult,
 } from "../types";
 
 const SESSION_KEY = "adminPassword";
@@ -599,6 +601,114 @@ function TestAlertForm({ apiKey }: TestAlertFormProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Nudge unconfirmed signups (dry run first, then an explicit send)
+// ---------------------------------------------------------------------------
+
+interface NudgePanelProps {
+  apiKey: string;
+}
+
+function NudgePanel({ apiKey }: NudgePanelProps) {
+  const [preview, setPreview] = useState<NudgeResult | null>(null);
+  const [result, setResult] = useState<NudgeResult | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handlePreview() {
+    setBusy(true);
+    setError("");
+    setResult(null);
+    try {
+      setPreview(await nudgeUnconfirmed(apiKey, true));
+    } catch {
+      setError("Failed to load the preview.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSend() {
+    if (!preview) return;
+    const ok = window.confirm(
+      `Send the reminder email to ${preview.recipient_count} unconfirmed signup(s)? This cannot be undone.`
+    );
+    if (!ok) return;
+    setBusy(true);
+    setError("");
+    try {
+      setResult(await nudgeUnconfirmed(apiKey, false));
+      setPreview(null);
+    } catch {
+      setError("Failed to send. Nothing may have gone out; preview again to check.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section
+      icon={<Users className="h-5 w-5 text-primary" aria-hidden="true" />}
+      title="Nudge Unconfirmed Signups"
+    >
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+        <p className="text-sm text-muted-foreground mb-4">
+          Reminds people who signed up in the last 30 days but never confirmed. Preview first: it lists
+          exactly who would get the email and sends nothing. Each person is reminded at most once.
+        </p>
+        <div className="flex flex-wrap gap-3 mb-4">
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={busy}
+            className="px-4 py-2 rounded-md border border-border bg-background text-sm font-medium hover:border-primary/50 disabled:opacity-50 transition-colors"
+          >
+            {busy && !preview ? "Loading..." : "Preview recipients"}
+          </button>
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={busy || !preview || preview.recipient_count === 0}
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {preview ? `Send reminder to ${preview.recipient_count}` : "Send reminder"}
+          </button>
+        </div>
+
+        {preview && (
+          <div className="mb-4">
+            <p className="text-sm text-foreground mb-2">
+              {preview.recipient_count === 0
+                ? "Nobody to remind right now."
+                : `${preview.recipient_count} would receive the reminder (dry run, nothing sent):`}
+            </p>
+            {preview.recipient_count > 0 && (
+              <ul className="text-sm text-muted-foreground space-y-1 max-h-48 overflow-y-auto">
+                {preview.recipients.map((r) => (
+                  <li key={r.email}>
+                    {r.name} — {r.email} — signed up {formatDate(r.signed_up)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {result && (
+          <p role="status" className="text-sm text-green-700 dark:text-green-400">
+            Reminder sent to {result.sent} signup{result.sent === 1 ? "" : "s"}.
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard
 // ---------------------------------------------------------------------------
 
@@ -697,6 +807,7 @@ function Dashboard({ apiKey, onLogout }: DashboardProps) {
             <NotificationSection stats={data.notificationStats} />
             <EventsSection events={data.events} />
             <TestAlertForm apiKey={apiKey} />
+            <NudgePanel apiKey={apiKey} />
           </div>
         ) : null}
       </main>

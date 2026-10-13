@@ -146,3 +146,21 @@ def feedback_email(subject: str, message: str, reply_email: str | None) -> str:
     </body>
     </html>
     """
+
+
+def confirmation_reminder_email(name: str, confirm_url: str, signed_up: str) -> str:
+    """One-time reminder for a signup that was never confirmed."""
+    safe_name = html.escape(name)
+    safe_date = html.escape(signed_up)
+    return f"""
+    <html>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #1a365d;">King Tide Alert</h1>
+        <p>Hi {safe_name},</p>
+        <p>You signed up for King Tide Alert on {safe_date}, but the subscription was never confirmed, so no alerts are going to this address yet. King tide season on the Mill Valley–Sausalito path runs November through February.</p>
+        <a href="{confirm_url}" style="display: inline-block; background-color: #2b6cb0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">Confirm Subscription</a>
+        <p>Once confirmed, you'll get an email 7 days and 48 hours before tides high enough to flood the path.</p>
+        <p style="color: #718096; font-size: 14px;">If you didn't sign up, ignore this email. Nothing further will be sent.</p>
+    </body>
+    </html>
+    """

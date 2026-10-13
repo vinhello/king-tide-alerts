@@ -18,14 +18,18 @@ from app.schemas.admin import (
     GrowthPoint,
     NotificationHistoryItem,
     NotificationStats,
+    NudgeRecipient,
+    NudgeResult,
     PlannedAlert,
     SubscriberStats,
     SystemHealth,
     TestAlertResponse,
 )
 from app.rate_limit import limiter
+from app.services import nudge
 from app.services.king_tide_detector import send_alerts
 from app.services.notification import build_king_tide_alert_email, send_king_tide_alert
+from app.utils.email_templates import confirmation_reminder_email
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -301,6 +305,47 @@ async def preview_alert_run(
             )
             for a in plan.alerts
         ],
+        sample_subject=sample_subject,
+        sample_email_html=sample_html,
+    )
+
+
+@router.post("/nudge-unconfirmed", response_model=NudgeResult)
+@limiter.limit("2/minute")
+async def nudge_unconfirmed_signups(
+    request: Request,
+    dry_run: bool = Query(default=True, description="False actually sends"),
+    days: int = Query(default=30, ge=1, le=365),
+    _key: str = Depends(verify_admin_auth),
+    db: Session = Depends(get_db),
+):
+    """Remind unconfirmed signups to confirm. Dry run by default.
+
+    A dry run lists who would receive the reminder and shows a sample.
+    Only dry_run=false sends, and each recipient is recorded so nobody is
+    reminded twice.
+    """
+    outcome = await nudge.nudge_unconfirmed(db, window_days=days, dry_run=dry_run)
+
+    sample_subject = None
+    sample_html = None
+    if outcome.recipients:
+        sample_subject = "Reminder: confirm your King Tide Alert subscription"
+        sample_html = confirmation_reminder_email(
+            name="Subscriber",
+            confirm_url=f"{settings.APP_URL}/confirm/example",
+            signed_up=outcome.recipients[0].signed_up.strftime("%B %-d, %Y"),
+        )
+
+    return NudgeResult(
+        dry_run=outcome.dry_run,
+        window_days=outcome.window_days,
+        recipient_count=len(outcome.recipients),
+        recipients=[
+            NudgeRecipient(name=r.name, email=r.email, signed_up=r.signed_up)
+            for r in outcome.recipients
+        ],
+        sent=outcome.sent,
         sample_subject=sample_subject,
         sample_email_html=sample_html,
     )

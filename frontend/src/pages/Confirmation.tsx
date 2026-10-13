@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useParams, Link } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { confirmSubscription } from "../services/api";
+import { confirmSubscription, resendConfirmation } from "../services/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -9,6 +9,19 @@ export default function Confirmation() {
   const { token } = useParams<{ token: string }>();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+
+  const handleResend = async (e: FormEvent) => {
+    e.preventDefault();
+    setResendStatus("sending");
+    try {
+      await resendConfirmation(resendEmail.trim());
+      setResendStatus("sent");
+    } catch {
+      setResendStatus("failed");
+    }
+  };
 
   useEffect(() => {
     async function confirm() {
@@ -60,7 +73,41 @@ export default function Confirmation() {
             <>
               <XCircle className="h-12 w-12 sm:h-16 sm:w-16 text-destructive mb-6" />
               <h1 className="text-2xl sm:text-3xl mb-4">Oops</h1>
-              <p className="text-muted-foreground mb-8">{message}</p>
+              <p className="text-muted-foreground mb-6">{message}</p>
+              {resendStatus === "sent" ? (
+                <p className="text-sm text-muted-foreground mb-8">
+                  If that address is subscribed and not yet confirmed, a new email is on its way.
+                </p>
+              ) : (
+                <form onSubmit={handleResend} className="w-full max-w-sm mb-8">
+                  <label htmlFor="resend-email" className="block text-sm text-muted-foreground mb-2">
+                    Need a new confirmation link? Enter the email you signed up with.
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="resend-email"
+                      type="email"
+                      required
+                      value={resendEmail}
+                      onChange={(e) => setResendEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="flex-1 px-3 py-2 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={resendStatus === "sending" || !resendEmail.trim()}
+                      className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {resendStatus === "sending" ? "Sending..." : "Resend"}
+                    </button>
+                  </div>
+                  {resendStatus === "failed" && (
+                    <p role="alert" className="text-sm text-destructive mt-2">
+                      Couldn't resend right now. Please try again in a few minutes.
+                    </p>
+                  )}
+                </form>
+              )}
               <Link
                 to="/"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base text-primary-foreground hover:bg-primary/90 transition-colors"

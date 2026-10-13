@@ -138,3 +138,23 @@ export interface SystemHealth {
 export interface TestAlertResponse {
   message: string;
 }
+
+export interface ResendConfirmationResponse {
+  message: string;
+}
+
+export interface NudgeRecipient {
+  name: string;
+  email: string;
+  signed_up: string;
+}
+
+export interface NudgeResult {
+  dry_run: boolean;
+  window_days: number;
+  recipient_count: number;
+  recipients: NudgeRecipient[];
+  sent: number;
+  sample_subject: string | null;
+  sample_email_html: string | null;
+}

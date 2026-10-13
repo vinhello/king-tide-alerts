@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, EmailStr, model_validator
 
 from app.models.subscriber import NotificationPreference
 
@@ -41,4 +41,12 @@ class ConfirmResponse(BaseModel):
 
 
 class UnsubscribeResponse(BaseModel):
+    message: str
+
+
+class ResendConfirmationRequest(BaseModel):
+    email: EmailStr
+
+
+class ResendConfirmationResponse(BaseModel):
     message: str

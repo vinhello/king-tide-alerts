@@ -7,9 +7,10 @@ import SubscribeForm from "../SubscribeForm";
 // Mock the api module
 vi.mock("../../services/api", () => ({
   subscribe: vi.fn(),
+  resendConfirmation: vi.fn(),
 }));
 
-import { subscribe } from "../../services/api";
+import { resendConfirmation, subscribe } from "../../services/api";
 
 // Wrapper for components that use react-router-dom
 const renderWithRouter = (component: React.ReactNode) => {
@@ -83,5 +84,34 @@ describe("SubscribeForm", () => {
     await waitFor(() => {
       expect(screen.getByText(/email already subscribed/i)).toBeInTheDocument();
     });
+  });
+});
+
+describe("SubscribeForm resend link", () => {
+  it("offers to resend the confirmation after a successful signup", async () => {
+    const user = userEvent.setup();
+    vi.mocked(subscribe).mockResolvedValueOnce({
+      id: "123",
+      name: "Test",
+      email: "test@example.com",
+      phone: null,
+      notification_preference: "email",
+      confirmed: false,
+      created_at: new Date().toISOString(),
+    });
+    vi.mocked(resendConfirmation).mockResolvedValueOnce({ message: "on its way" });
+
+    renderWithRouter(<SubscribeForm />);
+    await user.type(screen.getByLabelText(/name/i), "Test");
+    await user.type(screen.getByLabelText(/email/i), "test@example.com");
+    await user.click(screen.getByRole("button", { name: /subscribe/i }));
+
+    const resend = await screen.findByRole("button", { name: /resend the email/i });
+    await user.click(resend);
+
+    await waitFor(() => {
+      expect(screen.getByText(/sent again/i)).toBeInTheDocument();
+    });
+    expect(resendConfirmation).toHaveBeenCalledWith("test@example.com");
   });
 });
