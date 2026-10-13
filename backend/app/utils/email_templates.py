@@ -158,7 +158,7 @@ def confirmation_reminder_email(name: str, confirm_url: str, signed_up: str) -> 
         <h1 style="color: #1a365d;">King Tide Alert</h1>
         <p>Hi {safe_name},</p>
         <p>You signed up for King Tide Alert on {safe_date}, but the subscription was never confirmed, so no alerts are reaching this address yet.</p>
-        <p>King Tide Alert is free. Once you confirm, you'll get an email 7 days and again 48 hours before any tide high enough to flood the Mill Valley–Sausalito path. King tide season runs November through February, with the first big tides in late November.</p>
+        <p>King Tide Alert is free. Once you confirm, we'll email you twice before each flooding tide on the Mill Valley–Sausalito path: a heads-up 7 days ahead and a reminder 48 hours ahead. King tide season runs November through February, with the first big tides in late November.</p>
         <a href="{confirm_url}" style="display: inline-block; background-color: #2b6cb0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">Confirm Subscription</a>
         <p style="color: #718096; font-size: 14px;">If you didn't sign up, ignore this email. Nothing further will be sent.</p>
     </body>

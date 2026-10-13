@@ -114,6 +114,7 @@ def test_reminder_template_escapes_and_links():
     assert "https://x/confirm/t" in html
     assert "October 3, 2026" in html
     assert "King Tide Alert is free" in html
+    assert "a heads-up 7 days ahead and a reminder 48 hours ahead" in html
     assert "and nothing else" not in html
 
 
