@@ -10,16 +10,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { CalendarDays } from "lucide-react";
-import type { TidePrediction } from "../types";
-import { getUpcomingTides } from "../services/api";
+import { getObservedTides, getUpcomingTides } from "../services/api";
 import { EVENTS, trackEvent } from "../services/analytics";
+import {
+  buildChartData,
+  OBSERVED_DAYS,
+  UPCOMING_DAYS,
+  type ChartDataPoint,
+} from "./tideChartData";
 
-interface ChartDataPoint {
-  timestamp: number;
-  date: string;
-  height: number;
-  isKingTide: boolean;
-}
+const PREDICTED_COLOR = "#0A7EA4";
+const OBSERVED_COLOR = "#0D9488";
 
 function formatTickDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString("en-US", {
@@ -37,8 +38,17 @@ function formatTooltipDate(timestamp: number): string {
   });
 }
 
+function formatRangeDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export default function TideChart() {
   const [data, setData] = useState<ChartDataPoint[]>([]);
+  const [hasObserved, setHasObserved] = useState(false);
   const [threshold, setThreshold] = useState(6.0);
   const [kingTideHeight, setKingTideHeight] = useState(6.5);
   const [loading, setLoading] = useState(true);
@@ -47,17 +57,15 @@ export default function TideChart() {
   useEffect(() => {
     async function fetchTides() {
       try {
-        const response = await getUpcomingTides(10);
-        setThreshold(response.threshold);
-        setKingTideHeight(response.king_tide_height);
-        setData(
-          response.predictions.map((p: TidePrediction) => ({
-            timestamp: new Date(p.datetime).getTime(),
-            date: p.datetime,
-            height: p.height,
-            isKingTide: p.is_king_tide,
-          }))
-        );
+        // The chart still renders when only the predictions load.
+        const [upcoming, observed] = await Promise.all([
+          getUpcomingTides(UPCOMING_DAYS),
+          getObservedTides(OBSERVED_DAYS).catch(() => null),
+        ]);
+        setThreshold(upcoming.threshold);
+        setKingTideHeight(upcoming.king_tide_height);
+        setHasObserved((observed?.observations.length ?? 0) > 0);
+        setData(buildChartData(upcoming.predictions, observed));
       } catch {
         setError("Unable to load tide data");
       } finally {
@@ -70,7 +78,7 @@ export default function TideChart() {
   if (loading) {
     return (
       <div className="w-full">
-        <h2 className="text-xl sm:text-2xl mb-4">Upcoming Tides</h2>
+        <h2 className="text-xl sm:text-2xl mb-4">Tides</h2>
         <div className="bg-card rounded-lg border border-border p-6 sm:p-8">
           <p className="text-muted-foreground text-center">Loading tide data...</p>
         </div>
@@ -81,7 +89,7 @@ export default function TideChart() {
   if (error) {
     return (
       <div className="w-full">
-        <h2 className="text-xl sm:text-2xl mb-4">Upcoming Tides</h2>
+        <h2 className="text-xl sm:text-2xl mb-4">Tides</h2>
         <div className="bg-card rounded-lg border border-border p-6 sm:p-8">
           <p className="text-destructive text-center">{error}</p>
         </div>
@@ -89,15 +97,19 @@ export default function TideChart() {
     );
   }
 
-  const startDate = data.length > 0 ? new Date(data[0].date) : new Date();
-  const endDate = data.length > 0 ? new Date(data[data.length - 1].date) : new Date();
+  const now = Date.now();
+  const startTimestamp = data.length > 0 ? data[0].timestamp : now;
+  const endTimestamp = data.length > 0 ? data[data.length - 1].timestamp : now;
 
   return (
     <div className="w-full">
       <div className="mb-4">
-        <h2 className="text-xl sm:text-2xl mb-1">Upcoming Tides</h2>
+        <h2 className="text-xl sm:text-2xl mb-1">Tides</h2>
         <p className="text-xs sm:text-sm text-muted-foreground">
-          {startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - {endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          {hasObserved
+            ? `Measured at the gauge for the past ${OBSERVED_DAYS} days, predicted for the next ${UPCOMING_DAYS}. `
+            : `Predicted for the next ${UPCOMING_DAYS} days. `}
+          {formatRangeDate(startTimestamp)} – {formatRangeDate(endTimestamp)}
         </p>
       </div>
 
@@ -129,10 +141,9 @@ export default function TideChart() {
               }}
               labelFormatter={(value) => formatTooltipDate(value as number)}
               formatter={(value, name) => {
-                if (name === 'height' && typeof value === 'number') {
-                  return [`${value.toFixed(1)} ft`, 'Tide Height'];
-                }
-                return String(value);
+                if (typeof value !== 'number') return String(value);
+                const label = name === 'observed' ? 'Observed (gauge)' : 'Predicted';
+                return [`${value.toFixed(1)} ft`, label];
               }}
             />
             <ReferenceLine
@@ -159,10 +170,18 @@ export default function TideChart() {
                 fontSize: 10,
               }}
             />
+            {hasObserved && (
+              <ReferenceLine
+                x={now}
+                stroke="#64748B"
+                strokeDasharray="3 3"
+                label={{ value: 'Now', position: 'top', fill: '#64748B', fontSize: 10 }}
+              />
+            )}
             <Line
               type="monotone"
-              dataKey="height"
-              stroke="#0A7EA4"
+              dataKey="predicted"
+              stroke={PREDICTED_COLOR}
               strokeWidth={2}
               dot={(props: Record<string, unknown>) => {
                 const { cx, cy, payload } = props as {
@@ -185,13 +204,33 @@ export default function TideChart() {
                 }
                 return null;
               }}
-              activeDot={{ r: 4, fill: '#0A7EA4' }}
+              activeDot={{ r: 4, fill: PREDICTED_COLOR }}
             />
+            {hasObserved && (
+              <Line
+                type="monotone"
+                dataKey="observed"
+                stroke={OBSERVED_COLOR}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, fill: OBSERVED_COLOR }}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-muted-foreground">
+            {hasObserved && (
+              <div className="flex items-center gap-2">
+                <div className="h-0.5 w-6" style={{ borderTop: `2px solid ${OBSERVED_COLOR}` }} />
+                <span>Observed (NOAA gauge)</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <div className="h-0.5 w-6" style={{ borderTop: `2px solid ${PREDICTED_COLOR}` }} />
+              <span>Predicted</span>
+            </div>
             <div className="flex items-center gap-2">
               <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
               <span>Possible bike path flooding</span>
