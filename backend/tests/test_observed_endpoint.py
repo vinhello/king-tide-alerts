@@ -92,3 +92,22 @@ def test_observed_keeps_last_good_series_when_noaa_fails(client, monkeypatch):
 def test_observed_days_are_bounded(client):
     assert client.get("/api/tides/observed?days=0").status_code == 422
     assert client.get("/api/tides/observed?days=8").status_code == 422
+
+
+def test_observed_keeps_top_of_hour_samples_only(client):
+    six_minute = [
+        {"datetime": "2026-10-12 10:00", "height": 5.1},
+        {"datetime": "2026-10-12 10:06", "height": 5.2},
+        {"datetime": "2026-10-12 10:54", "height": 5.5},
+        {"datetime": "2026-10-12 11:00", "height": 5.6},
+        {"datetime": "2026-10-12 11:18", "height": 5.7},
+    ]
+    obs_patch, pred_patch = _noaa(obs=six_minute)
+    with obs_patch, pred_patch:
+        data = client.get("/api/tides/observed?days=3").json()
+
+    assert [o["datetime"] for o in data["observations"]] == [
+        "2026-10-12 10:00",
+        "2026-10-12 11:00",
+    ]
+    assert data["as_of"] == "2026-10-12 11:00"

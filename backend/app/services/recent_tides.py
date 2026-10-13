@@ -49,7 +49,13 @@ async def get_recent_tides(days: int) -> RecentTides:
     begin = end - timedelta(days=days)
     begin_str, end_str = begin.strftime("%Y%m%d"), end.strftime("%Y%m%d")
 
-    observations = await noaa.fetch_hourly_observations(begin_str, end_str)
+    # NOAA may answer with 6-minute samples whatever interval is asked for;
+    # keep the top of each hour so the series lines up with the predictions.
+    observations = [
+        o
+        for o in await noaa.fetch_hourly_observations(begin_str, end_str)
+        if o["datetime"].endswith(":00")
+    ]
     if not observations:
         logger.warning("No recent observations from NOAA; keeping the last series")
         return cached[1] if cached is not None else RecentTides([], [], days, "")
