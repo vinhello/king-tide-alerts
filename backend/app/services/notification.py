@@ -24,7 +24,10 @@ def _get_twilio_client() -> TwilioClient:
 async def send_email(
     to: str, subject: str, html: str, reply_to: str | None = None
 ) -> None:
-    """Send an email via Resend."""
+    """Send an email via Resend. Respects the NOTIFICATIONS_ENABLED switch."""
+    if not settings.NOTIFICATIONS_ENABLED:
+        logger.info(f"Notifications disabled; would have emailed {to}: {subject}")
+        return
     try:
         resend.api_key = settings.RESEND_API_KEY
         params: resend.Emails.SendParams = {
@@ -42,7 +45,10 @@ async def send_email(
 
 
 async def send_sms(to: str, message: str) -> None:
-    """Send an SMS via Twilio."""
+    """Send an SMS via Twilio. Respects the NOTIFICATIONS_ENABLED switch."""
+    if not settings.NOTIFICATIONS_ENABLED:
+        logger.info(f"Notifications disabled; would have texted {to}")
+        return
     try:
         client = _get_twilio_client()
         client.messages.create(
@@ -73,6 +79,51 @@ async def send_confirmation(subscriber: Subscriber) -> None:
             await send_sms(subscriber.phone, msg)
 
 
+def build_king_tide_alert_email(
+    name: str,
+    period_start: datetime,
+    period_end: datetime,
+    peak_datetime: datetime,
+    peak_height: float,
+    days_until: int,
+    unsubscribe_url: str,
+) -> tuple[str, str]:
+    """Return (subject, html) for an alert email exactly as subscribers get it."""
+    is_king_tide = peak_height >= settings.KING_TIDE_HEIGHT
+    is_multi_day = period_start.date() != period_end.date()
+
+    start_date_str = period_start.strftime("%A, %B %-d")
+    if is_multi_day:
+        end_date_str = period_end.strftime("%A, %B %-d")
+        date_range = f"{start_date_str} – {end_date_str}"
+    else:
+        date_range = start_date_str
+
+    peak_date = peak_datetime.strftime("%A, %B %-d")
+    peak_time = peak_datetime.strftime("%-I:%M %p")
+
+    # Flooding window: ~2 hours before/after peak
+    flood_start = peak_datetime - timedelta(hours=2)
+    flood_end = peak_datetime + timedelta(hours=2)
+
+    alert_label = "King Tide" if is_king_tide else "High Tide"
+    subject = f"🌊 {alert_label} Alert — {days_until} days away"
+    html = king_tide_alert_email(
+        name=name,
+        date_range=date_range,
+        peak_date=peak_date,
+        peak_time=peak_time,
+        flood_window_start=flood_start.strftime("%-I:%M %p"),
+        flood_window_end=flood_end.strftime("%-I:%M %p"),
+        height=peak_height,
+        is_king_tide=is_king_tide,
+        is_multi_day=is_multi_day,
+        days_until=days_until,
+        unsubscribe_url=unsubscribe_url,
+    )
+    return subject, html
+
+
 async def send_king_tide_alert(
     subscriber: Subscriber,
     period_start: datetime,
@@ -93,11 +144,8 @@ async def send_king_tide_alert(
     """
     unsubscribe_url = f"{settings.APP_URL}/unsubscribe/{subscriber.unsubscribe_token}"
     is_king_tide = peak_height >= settings.KING_TIDE_HEIGHT
-
-    # Determine if multi-day period
     is_multi_day = period_start.date() != period_end.date()
 
-    # Format date range
     start_date_str = period_start.strftime("%A, %B %-d")
     if is_multi_day:
         end_date_str = period_end.strftime("%A, %B %-d")
@@ -105,35 +153,27 @@ async def send_king_tide_alert(
     else:
         date_range = start_date_str
 
-    # Peak tide info
     peak_date = peak_datetime.strftime("%A, %B %-d")
     peak_time = peak_datetime.strftime("%-I:%M %p")
 
-    # Flooding window: ~2 hours before/after peak
     flood_start = peak_datetime - timedelta(hours=2)
     flood_end = peak_datetime + timedelta(hours=2)
     flood_window_start = flood_start.strftime("%-I:%M %p")
     flood_window_end = flood_end.strftime("%-I:%M %p")
 
-    alert_label = "King Tide" if is_king_tide else "High Tide"
     pref = subscriber.notification_preference
 
     if pref in (NotificationPreference.EMAIL, NotificationPreference.BOTH):
         if subscriber.email:
-            html = king_tide_alert_email(
+            subject, html = build_king_tide_alert_email(
                 name=subscriber.name,
-                date_range=date_range,
-                peak_date=peak_date,
-                peak_time=peak_time,
-                flood_window_start=flood_window_start,
-                flood_window_end=flood_window_end,
-                height=peak_height,
-                is_king_tide=is_king_tide,
-                is_multi_day=is_multi_day,
+                period_start=period_start,
+                period_end=period_end,
+                peak_datetime=peak_datetime,
+                peak_height=peak_height,
                 days_until=days_until,
                 unsubscribe_url=unsubscribe_url,
             )
-            subject = f"🌊 {alert_label} Alert — {days_until} days away"
             await send_email(subscriber.email, subject, html)
 
     if pref in (NotificationPreference.SMS, NotificationPreference.BOTH):

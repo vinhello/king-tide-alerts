@@ -472,6 +472,7 @@ interface TestAlertFormProps {
 }
 
 function TestAlertForm({ apiKey }: TestAlertFormProps) {
+  const [to, setTo] = useState("");
   const [height, setHeight] = useState("6.8");
   const [daysUntil, setDaysUntil] = useState("7");
   const [result, setResult] = useState("");
@@ -487,6 +488,12 @@ function TestAlertForm({ apiKey }: TestAlertFormProps) {
     const parsedHeight = parseFloat(height);
     const parsedDays = parseInt(daysUntil, 10);
 
+    if (!to.trim()) {
+      setError("Enter the one email address that should receive the test.");
+      setSending(false);
+      return;
+    }
+
     if (isNaN(parsedHeight) || isNaN(parsedDays)) {
       setError("Please enter valid numeric values.");
       setSending(false);
@@ -494,7 +501,7 @@ function TestAlertForm({ apiKey }: TestAlertFormProps) {
     }
 
     try {
-      const response = await sendTestAlert(apiKey, parsedHeight, parsedDays);
+      const response = await sendTestAlert(apiKey, to.trim(), parsedHeight, parsedDays);
       setResult(response.message);
     } catch {
       setError("Failed to send test alert. Check the API key and try again.");
@@ -510,6 +517,25 @@ function TestAlertForm({ apiKey }: TestAlertFormProps) {
     >
       <div className="bg-card rounded-xl shadow-sm border border-border p-6">
         <form onSubmit={handleSubmit} noValidate>
+          <p className="text-sm text-muted-foreground mb-4">
+            Sends one test alert to the address below and to nobody else. Subscribers are never used.
+          </p>
+          <div className="mb-4">
+            <label
+              htmlFor="test-to"
+              className="block text-sm font-medium text-foreground mb-1"
+            >
+              Send to (one email address)
+            </label>
+            <input
+              id="test-to"
+              type="email"
+              placeholder="you@example.com"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label
@@ -550,7 +576,7 @@ function TestAlertForm({ apiKey }: TestAlertFormProps) {
 
           <button
             type="submit"
-            disabled={sending}
+            disabled={sending || !to.trim()}
             className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {sending ? "Sending..." : "Send test alert"}

@@ -110,11 +110,17 @@ export async function getAdminEvents(apiKey: string): Promise<AdminEvent[]> {
 
 export async function sendTestAlert(
   apiKey: string,
+  to: string,
   height: number = 6.8,
   daysUntil: number = 7
 ): Promise<TestAlertResponse> {
+  const params = new URLSearchParams({
+    to,
+    height: String(height),
+    days_until: String(daysUntil),
+  });
   const response = await api.post<TestAlertResponse>(
-    `/api/admin/test-alert?height=${height}&days_until=${daysUntil}`,
+    `/api/admin/test-alert?${params.toString()}`,
     null,
     adminHeaders(apiKey)
   );
