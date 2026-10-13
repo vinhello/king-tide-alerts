@@ -1,4 +1,8 @@
 import html
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.services.tide_residual import ResidualSummary
 
 
 def confirmation_email(name: str, confirm_url: str) -> str:
@@ -29,7 +33,9 @@ def king_tide_alert_email(
     is_multi_day: bool,
     days_until: int,
     unsubscribe_url: str,
+    residual: "ResidualSummary | None" = None,
 ) -> str:
+    residual_note = residual_sentence(residual)
     urgency = "Heads up" if days_until > 3 else "Reminder"
     emoji = "👑🌊" if is_king_tide else "🌊"
     alert_type = "King Tide Alert" if is_king_tide else "High Tide Alert"
@@ -65,6 +71,7 @@ def king_tide_alert_email(
             <p style="margin: 8px 0 0;"><strong>Flooding possible:</strong> {flood_window_start} – {flood_window_end} (estimate, around peak)</p>
             <p style="margin: 8px 0 0;"><strong>Peak height:</strong> {height:.1f} ft</p>
             <p style="margin: 8px 0 0;"><strong>Gauge:</strong> San Francisco (Golden Gate), NOAA 9414290</p>
+            {residual_note}
         </div>
         <p>Consider alternate routes or plan your ride around the flooding window.</p>
         <p style="margin-top: 16px;">
@@ -146,3 +153,20 @@ def feedback_email(subject: str, message: str, reply_email: str | None) -> str:
     </body>
     </html>
     """
+
+
+def residual_sentence(residual: "ResidualSummary | None") -> str:
+    """One measured, dated sentence for the alert details box, or empty."""
+    if residual is None:
+        return ""
+    magnitude = abs(residual.mean_residual_ft)
+    if magnitude < 0.05:
+        comparison = "matched NOAA's predictions"
+    else:
+        direction = "above" if residual.mean_residual_ft > 0 else "below"
+        comparison = f"averaged {magnitude:.1f} ft {direction} NOAA's predictions"
+    return (
+        '<p style="margin: 8px 0 0;"><strong>Measured recently:</strong> over the '
+        f"{residual.window_days} days ending {residual.as_of}, water at this gauge "
+        f"{comparison}. Actual levels may differ from the predicted height above.</p>"
+    )

@@ -180,3 +180,85 @@ async def fetch_next_high_tide(station_id: str | None = None) -> dict | None:
             return {"datetime": pred["datetime"], "height": pred["height"]}
 
     return None
+
+
+async def fetch_hourly_observations(
+    begin_date: str,
+    end_date: str,
+    station_id: str | None = None,
+) -> list[dict]:
+    """Fetch observed water levels between two dates (YYYYMMDD, inclusive).
+
+    NOAA may return hourly or 6-minute samples; callers match on timestamp.
+    """
+    station = station_id or settings.NOAA_STATION_ID
+    params = {
+        "product": "water_level",
+        "begin_date": begin_date,
+        "end_date": end_date,
+        "datum": "MLLW",
+        "station": station,
+        "interval": "h",
+        "units": "english",
+        "time_zone": "lst_ldt",
+        "format": "json",
+        "application": "king_tide_alerts",
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(NOAA_BASE_URL, params=params, timeout=30.0)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPError as e:
+            logger.error(f"NOAA API error fetching observations: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error fetching observations: {e}")
+            return []
+
+    results = []
+    for item in data.get("data", []):
+        try:
+            results.append({"datetime": item["t"], "height": float(item["v"])})
+        except (KeyError, ValueError, TypeError):
+            continue  # gaps in the record come back with empty values
+    return results
+
+
+async def fetch_hourly_predictions_between(
+    begin_date: str,
+    end_date: str,
+    station_id: str | None = None,
+) -> list[dict]:
+    """Fetch hourly tide predictions between two dates (YYYYMMDD, inclusive)."""
+    station = station_id or settings.NOAA_STATION_ID
+    params = {
+        "product": "predictions",
+        "begin_date": begin_date,
+        "end_date": end_date,
+        "datum": "MLLW",
+        "station": station,
+        "interval": "h",
+        "units": "english",
+        "time_zone": "lst_ldt",
+        "format": "json",
+        "application": "king_tide_alerts",
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(NOAA_BASE_URL, params=params, timeout=30.0)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPError as e:
+            logger.error(f"NOAA API error fetching predictions: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error fetching predictions: {e}")
+            return []
+
+    return [
+        {"datetime": pred["t"], "height": float(pred["v"])}
+        for pred in data.get("predictions", [])
+    ]

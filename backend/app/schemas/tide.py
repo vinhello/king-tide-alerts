@@ -40,3 +40,9 @@ class CurrentTideStatus(BaseModel):
     hours_until_high_tide: float | None
     status: str
     threshold: float
+    # Measured mean of observed minus predicted over the trailing window.
+    # None when NOAA data is unavailable; the UI omits the line.
+    residual_ft: float | None = None
+    residual_window_days: int | None = None
+    residual_sample_hours: int | None = None
+    residual_as_of: str | None = None
