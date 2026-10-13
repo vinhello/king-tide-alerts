@@ -55,7 +55,8 @@ describe("History", () => {
     });
 
     expect(screen.getByText("King Tide")).toBeInTheDocument();
-    expect(screen.getByText("42 notifications sent")).toBeInTheDocument();
+    // The per-event send count is intentionally not shown to visitors.
+    expect(screen.queryByText(/notifications? sent/i)).not.toBeInTheDocument();
   });
 
   it("renders empty state", async () => {

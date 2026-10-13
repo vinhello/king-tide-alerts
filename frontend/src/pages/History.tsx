@@ -92,10 +92,6 @@ function EventCard({ event, threshold, kingTideHeight }: EventCardProps) {
               </span>
             )}
           </div>
-          <div className="text-muted-foreground">
-            {event.notifications_sent} notification
-            {event.notifications_sent !== 1 ? "s" : ""} sent
-          </div>
         </div>
       </div>
     </div>
