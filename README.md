@@ -129,6 +129,8 @@ The project deploys as three Railway services:
 | `FEEDBACK_EMAIL` | Inbox that receives feedback form submissions (default: `info@kingtidealert.com`) |
 | `HEALTHCHECK_PING_URL` | Optional. Ping URL of a [healthchecks.io](https://healthchecks.io) check. The daily job pings it on start, success and failure so a missed run triggers an email. Empty disables. |
 | `NOAA_STATION_ID` | NOAA station (default: `9414290` — San Francisco, Golden Gate) |
+| `NWS_ZONES` | Comma-separated NWS forecast zones whose coastal flood products are shown on the home page (default: `CAZ505,CAZ506,CAZ508`, the zones the Mill Valley–Sausalito path straddles) |
+| `NWS_USER_AGENT` | User-Agent sent to api.weather.gov, which requires one that names the app and a contact |
 | `KING_TIDE_THRESHOLD` | Alert threshold in MLLW ft (default: `6.0`) |
 | `KING_TIDE_HEIGHT` | King tide label threshold in MLLW ft (default: `6.5`) |
 | `ENVIRONMENT` | Set to `production` to enable the scheduler |
@@ -149,6 +151,7 @@ The project deploys as three Railway services:
 | GET | `/api/unsubscribe/{token}` | Unsubscribe |
 | POST | `/api/feedback` | Send feedback from the website to the project inbox |
 | GET | `/api/tides/upcoming?days=14` | Tide predictions with king tide flags |
+| GET | `/api/alerts/nws` | Active NWS coastal flood products for the configured zones, quoted verbatim (cached 10 minutes) |
 | POST | `/api/stripe/create-checkout-session` | Start a donation checkout |
 | POST | `/api/stripe/webhook` | Stripe webhook handler |
 | POST | `/api/webhooks/resend` | Resend delivery webhook (delivered, delayed, bounced, complained) |
