@@ -28,8 +28,8 @@ class Subscriber(Base):
     )
     unsubscribe_token: Mapped[str] = mapped_column(unique=True, nullable=False)
     confirmed: Mapped[bool] = mapped_column(default=False, nullable=False)
-    # Lifecycle. Unsubscribing keeps the row and sets unsubscribed_at, so
-    # churn is measurable and a later signup reactivates the same record.
+    # Lifecycle. Unsubscribing sets unsubscribed_at and erases the personal
+    # fields (name, email, phone); the anonymous row stays so churn is countable.
     confirmed_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
