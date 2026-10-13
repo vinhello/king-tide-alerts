@@ -169,3 +169,28 @@ export interface NudgeResult {
   sample_subject: string | null;
   sample_email_html: string | null;
 }
+
+// One National Weather Service product, wording passed through verbatim.
+export interface NwsAlert {
+  id: string;
+  event: string;
+  severity: string;
+  headline: string;
+  what: string;
+  where: string;
+  when: string;
+  impacts: string;
+  additional_details: string;
+  instruction: string;
+  onset: string;
+  ends: string;
+  sent: string;
+  sender_name: string;
+  zones: string[];
+  link: string;
+}
+
+export interface NwsAlertsResponse {
+  alerts: NwsAlert[];
+  zones: string[];
+}

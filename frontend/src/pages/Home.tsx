@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import SubscribeForm from "../components/SubscribeForm";
 import TideChart from "../components/TideChart";
 import CurrentTideStatus from "../components/CurrentTideStatus";
+import NwsAdvisoryBanner from "../components/NwsAdvisoryBanner";
 
 const FAQ_ITEMS = [
   {
@@ -105,6 +106,7 @@ export default function Home() {
         {/* Current Tide Status — promoted to first position */}
         <section id="status" className="bg-background">
           <div className="mx-auto max-w-[720px] px-4 -mt-10 sm:-mt-12 relative z-10 pb-6 sm:pb-8">
+            <NwsAdvisoryBanner />
             <CurrentTideStatus />
           </div>
         </section>

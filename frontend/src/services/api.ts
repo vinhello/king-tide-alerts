@@ -1,5 +1,6 @@
 import axios from "axios";
 import type {
+  NwsAlertsResponse,
   AdminEvent,
   CheckoutSessionResponse,
   ConfirmResponse,
@@ -150,5 +151,10 @@ export async function sendTestAlert(
     null,
     adminHeaders(apiKey)
   );
+  return response.data;
+}
+
+export async function getNwsAlerts(): Promise<NwsAlertsResponse> {
+  const response = await api.get<NwsAlertsResponse>("/api/alerts/nws");
   return response.data;
 }
