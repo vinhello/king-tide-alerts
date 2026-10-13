@@ -41,3 +41,26 @@ def test_send_sms_uses_provider_when_enabled():
     with patch("app.services.notification._get_twilio_client", return_value=client):
         asyncio.run(send_sms("+14155550100", "hello"))
     client.messages.create.assert_called_once()
+
+
+def test_send_email_returns_provider_message_id():
+    with patch(
+        "app.services.notification.resend.Emails.send", return_value={"id": "re_123"}
+    ):
+        message_id = asyncio.run(send_email("rider@example.com", "Subject", "<p>hi</p>"))
+    assert message_id == "re_123"
+
+
+def test_send_email_returns_none_when_disabled(notifications_disabled):
+    with patch("app.services.notification.resend.Emails.send") as mock_resend:
+        message_id = asyncio.run(send_email("rider@example.com", "Subject", "<p>hi</p>"))
+    assert message_id is None
+    mock_resend.assert_not_called()
+
+
+def test_send_email_returns_none_when_provider_fails():
+    with patch(
+        "app.services.notification.resend.Emails.send", side_effect=RuntimeError("boom")
+    ):
+        message_id = asyncio.run(send_email("rider@example.com", "Subject", "<p>hi</p>"))
+    assert message_id is None

@@ -305,7 +305,7 @@ async def _send_period_alert(
         if dry_run:
             continue
 
-        await notification.send_king_tide_alert(
+        message_id = await notification.send_king_tide_alert(
             subscriber=subscriber,
             period_start=period_start_dt,
             period_end=period_end_dt,
@@ -319,6 +319,7 @@ async def _send_period_alert(
                 subscriber_id=subscriber.id,
                 king_tide_event_id=peak_event_id,
                 notification_type=notification_type,
+                provider_message_id=message_id,
             )
         )
 

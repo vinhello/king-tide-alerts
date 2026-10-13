@@ -293,6 +293,32 @@ function SubscriberSection({ stats }: SubscriberSectionProps) {
 // Notification stats section
 // ---------------------------------------------------------------------------
 
+const DELIVERY_BADGES: Record<string, { label: string; className: string }> = {
+  delivered: { label: "Delivered", className: "bg-secondary/10 text-secondary" },
+  delivery_delayed: { label: "Delayed", className: "bg-accent/10 text-accent" },
+  bounced: { label: "Bounced", className: "bg-destructive/10 text-destructive" },
+  complained: { label: "Spam complaint", className: "bg-destructive/10 text-destructive" },
+  sent: { label: "Sent", className: "bg-muted text-muted-foreground" },
+};
+
+function DeliveryBadge({ status }: { status?: string }) {
+  const badge = status ? DELIVERY_BADGES[status] : undefined;
+  if (!badge) {
+    return (
+      <span className="text-muted-foreground" aria-label="No delivery record">
+        —
+      </span>
+    );
+  }
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}
+    >
+      {badge.label}
+    </span>
+  );
+}
+
 interface NotificationSectionProps {
   stats: NotificationStats;
 }
@@ -308,6 +334,9 @@ function NotificationSection({ stats }: NotificationSectionProps) {
         <StatCard label="7-day alerts" value={stats.seven_day_alerts} />
         <StatCard label="48-hour reminders" value={stats.forty_eight_hour_reminders} />
         <StatCard label="Confirmations" value={stats.confirmations} />
+        <StatCard label="Delivered" value={stats.delivered ?? 0} sub="reported by Resend" />
+        <StatCard label="Bounced" value={stats.bounced ?? 0} sub="permanent ones stop sending" />
+        <StatCard label="Spam complaints" value={stats.complained ?? 0} sub="each one stops sending" />
       </div>
 
       {stats.daily_counts.length > 0 && (
@@ -367,6 +396,9 @@ function NotificationSection({ stats }: NotificationSectionProps) {
                     Type
                   </th>
                   <th scope="col" className="text-left px-6 py-3 text-muted-foreground font-medium">
+                    Delivery
+                  </th>
+                  <th scope="col" className="text-left px-6 py-3 text-muted-foreground font-medium">
                     Sent at
                   </th>
                 </tr>
@@ -377,6 +409,9 @@ function NotificationSection({ stats }: NotificationSectionProps) {
                     <td className="px-6 py-3 text-foreground">{item.subscriber_name}</td>
                     <td className="px-6 py-3 text-muted-foreground capitalize">
                       {item.notification_type.replace(/_/g, " ")}
+                    </td>
+                    <td className="px-6 py-3">
+                      <DeliveryBadge status={item.delivery_status} />
                     </td>
                     <td className="px-6 py-3 text-muted-foreground">
                       {formatDateTime(item.sent_at)}

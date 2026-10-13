@@ -41,7 +41,7 @@ async def test_nudge_dry_run_lists_and_sends_nothing(test_db):
     _signup(test_db, "b@example.com", name="B")
 
     with patch(
-        "app.services.notification.send_confirmation_reminder", new_callable=AsyncMock
+        "app.services.notification.send_confirmation_reminder", new_callable=AsyncMock, return_value="re_test"
     ) as send:
         outcome = await nudge_unconfirmed(test_db, window_days=30, dry_run=True)
 
@@ -58,16 +58,18 @@ async def test_nudge_real_run_sends_records_and_dedupes(test_db):
     _signup(test_db, "b@example.com")
 
     with patch(
-        "app.services.notification.send_confirmation_reminder", new_callable=AsyncMock
+        "app.services.notification.send_confirmation_reminder", new_callable=AsyncMock, return_value="re_test"
     ) as send:
         first = await nudge_unconfirmed(test_db, window_days=30, dry_run=False)
         second = await nudge_unconfirmed(test_db, window_days=30, dry_run=False)
 
     assert first.sent == 2
     assert send.await_count == 2
-    assert test_db.query(NotificationSent).filter(
+    reminders = test_db.query(NotificationSent).filter(
         NotificationSent.notification_type == NotificationType.CONFIRMATION
-    ).count() == 2
+    ).all()
+    assert len(reminders) == 2
+    assert all(r.provider_message_id == "re_test" for r in reminders)
     # Nobody is reminded twice.
     assert second.recipients == [] and second.sent == 0
 
@@ -76,7 +78,7 @@ def test_admin_nudge_defaults_to_dry_run(client, test_db):
     _signup(test_db, "a@example.com", name="Alice")
 
     with patch(
-        "app.services.notification.send_confirmation_reminder", new_callable=AsyncMock
+        "app.services.notification.send_confirmation_reminder", new_callable=AsyncMock, return_value="re_test"
     ) as send:
         response = client.post("/api/admin/nudge-unconfirmed", headers=HEADERS)
 
@@ -94,7 +96,7 @@ def test_admin_nudge_sends_only_when_explicitly_asked(client, test_db):
     _signup(test_db, "a@example.com")
 
     with patch(
-        "app.services.notification.send_confirmation_reminder", new_callable=AsyncMock
+        "app.services.notification.send_confirmation_reminder", new_callable=AsyncMock, return_value="re_test"
     ) as send:
         response = client.post("/api/admin/nudge-unconfirmed?dry_run=false", headers=HEADERS)
 

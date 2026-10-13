@@ -28,11 +28,15 @@ async def send_email(
     html: str,
     reply_to: str | None = None,
     headers: dict[str, str] | None = None,
-) -> None:
-    """Send an email via Resend. Respects the NOTIFICATIONS_ENABLED switch."""
+) -> str | None:
+    """Send an email via Resend. Respects the NOTIFICATIONS_ENABLED switch.
+
+    Returns Resend's id for the email, which its delivery webhooks later
+    refer to, or None when nothing was sent.
+    """
     if not settings.NOTIFICATIONS_ENABLED:
         logger.info(f"Notifications disabled; would have emailed {to}: {subject}")
-        return
+        return None
     try:
         resend.api_key = settings.RESEND_API_KEY
         params: resend.Emails.SendParams = {
@@ -45,10 +49,18 @@ async def send_email(
             params["reply_to"] = reply_to
         if headers:
             params["headers"] = headers
-        resend.Emails.send(params)
+        response = resend.Emails.send(params)
         logger.info(f"Email sent to {to}")
+        return _provider_message_id(response)
     except Exception as e:
         logger.error(f"Failed to send email to {to}: {e}")
+        return None
+
+
+def _provider_message_id(response: object) -> str | None:
+    """The id in Resend's send response; anything unexpected counts as unknown."""
+    message_id = response.get("id") if isinstance(response, dict) else None
+    return message_id if isinstance(message_id, str) and message_id else None
 
 
 async def send_sms(to: str, message: str) -> None:
@@ -138,7 +150,7 @@ async def send_king_tide_alert(
     peak_datetime: datetime,
     peak_height: float,
     days_until: int,
-) -> None:
+) -> str | None:
     """Send a high tide / king tide alert based on subscriber preference.
 
     Args:
@@ -148,7 +160,11 @@ async def send_king_tide_alert(
         peak_datetime: Datetime of the peak tide in the period.
         peak_height: Height of the peak tide in feet.
         days_until: Days until the period starts.
+
+    Returns:
+        Resend's id for the alert email, or None when no email was sent.
     """
+    message_id: str | None = None
     unsubscribe_url = f"{settings.APP_URL}/unsubscribe/{subscriber.unsubscribe_token}"
     is_king_tide = peak_height >= settings.KING_TIDE_HEIGHT
     is_multi_day = period_start.date() != period_end.date()
@@ -181,7 +197,7 @@ async def send_king_tide_alert(
                 days_until=days_until,
                 unsubscribe_url=unsubscribe_url,
             )
-            await send_email(
+            message_id = await send_email(
                 subscriber.email,
                 subject,
                 html,
@@ -202,6 +218,8 @@ async def send_king_tide_alert(
                 days_until=days_until,
             )
             await send_sms(subscriber.phone, msg)
+
+    return message_id
 
 
 async def send_feedback(
@@ -224,14 +242,17 @@ async def send_feedback(
     )
 
 
-async def send_confirmation_reminder(subscriber: Subscriber) -> None:
-    """Email a one-time reminder to confirm. Email subscribers only."""
+async def send_confirmation_reminder(subscriber: Subscriber) -> str | None:
+    """Email a one-time reminder to confirm. Email subscribers only.
+
+    Returns Resend's id for the email, or None when no email was sent.
+    """
     if not subscriber.email:
-        return
+        return None
     confirm_url = f"{settings.APP_URL}/confirm/{subscriber.unsubscribe_token}"
     signed_up = subscriber.created_at.strftime("%B %-d, %Y")
     html = confirmation_reminder_email(subscriber.name, confirm_url, signed_up)
-    await send_email(
+    return await send_email(
         subscriber.email, "Reminder: confirm your King Tide Alert subscription", html
     )
 

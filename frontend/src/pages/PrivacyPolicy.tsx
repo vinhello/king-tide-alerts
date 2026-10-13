@@ -43,6 +43,11 @@ export default function PrivacyPolicy() {
               <li>Send you tide alerts before high tide events in Sausalito</li>
               <li>Send confirmation messages when you subscribe</li>
               <li>Process unsubscribe requests</li>
+              <li>
+                Record whether each email was delivered, bounced, or reported as
+                spam, so we stop sending to addresses that cannot or do not want
+                to receive our messages
+              </li>
             </ul>
             <p>
               We do <strong>not</strong> use your data for marketing, advertising,
@@ -66,7 +71,9 @@ export default function PrivacyPolicy() {
             </p>
             <ul>
               <li>
-                <strong>Resend:</strong> Our email delivery provider
+                <strong>Resend:</strong> Our email delivery provider, which also
+                reports back whether each message was delivered, bounced, or
+                marked as spam
               </li>
               <li>
                 <strong>Twilio:</strong> Our SMS delivery provider

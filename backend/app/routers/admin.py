@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
+from app.models.email_event import EmailEvent, EmailEventType
 from app.models.king_tide_event import KingTideEvent
 from app.models.notification_sent import NotificationSent, NotificationType
 from app.models.subscriber import NotificationPreference, Subscriber
@@ -26,7 +27,7 @@ from app.schemas.admin import (
     TestAlertResponse,
 )
 from app.rate_limit import limiter
-from app.services import nudge
+from app.services import email_events, nudge
 from app.services.king_tide_detector import send_alerts
 from app.services.notification import build_king_tide_alert_email, send_king_tide_alert
 from app.utils.email_templates import confirmation_reminder_email
@@ -157,7 +158,19 @@ async def notification_stats(
         .count()
     )
 
-    # Last 20 notifications
+    # Delivery outcomes reported by Resend, counted per email rather than per
+    # event (a delayed message can report several times).
+    outcome_rows = (
+        db.query(
+            EmailEvent.event_type,
+            func.count(func.distinct(EmailEvent.provider_message_id)),
+        )
+        .group_by(EmailEvent.event_type)
+        .all()
+    )
+    outcomes = {event_type: count for event_type, count in outcome_rows}
+
+    # Last 20 notifications, each with its delivery status
     recent_rows = (
         db.query(NotificationSent)
         .join(Subscriber)
@@ -165,12 +178,24 @@ async def notification_stats(
         .limit(20)
         .all()
     )
+    events_by_notification: dict = {}
+    if recent_rows:
+        recent_events = (
+            db.query(EmailEvent)
+            .filter(EmailEvent.notification_id.in_([n.id for n in recent_rows]))
+            .all()
+        )
+        for event in recent_events:
+            events_by_notification.setdefault(event.notification_id, []).append(event)
     recent = [
         NotificationHistoryItem(
             id=str(n.id),
             subscriber_name=n.subscriber.name,
             notification_type=n.notification_type.value,
             sent_at=n.sent_at,
+            delivery_status=email_events.delivery_status(
+                n, events_by_notification.get(n.id, [])
+            ),
         )
         for n in recent_rows
     ]
@@ -194,6 +219,9 @@ async def notification_stats(
         seven_day_alerts=seven_day,
         forty_eight_hour_reminders=forty_eight,
         confirmations=confirmations,
+        delivered=outcomes.get(EmailEventType.DELIVERED, 0),
+        bounced=outcomes.get(EmailEventType.BOUNCED, 0),
+        complained=outcomes.get(EmailEventType.COMPLAINED, 0),
         recent=recent,
         daily_counts=daily_counts,
     )

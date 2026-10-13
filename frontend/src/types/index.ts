@@ -110,6 +110,9 @@ export interface NotificationStats {
   seven_day_alerts: number;
   forty_eight_hour_reminders: number;
   confirmations: number;
+  delivered?: number;
+  bounced?: number;
+  complained?: number;
   recent: NotificationHistoryItem[];
   daily_counts: DailyCount[];
 }
@@ -119,6 +122,7 @@ export interface NotificationHistoryItem {
   subscriber_name: string;
   notification_type: string;
   sent_at: string;
+  delivery_status?: string;
 }
 
 export interface DailyCount {

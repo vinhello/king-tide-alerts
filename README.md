@@ -122,6 +122,7 @@ The project deploys as three Railway services:
 | `TWILIO_PHONE_NUMBER` | Twilio phone number |
 | `STRIPE_API_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `RESEND_WEBHOOK_SECRET` | Resend webhook signing secret (starts with `whsec_`). Enables `POST /api/webhooks/resend`, which records delivery outcomes and stops sending to an address after a hard bounce or spam complaint. Empty disables the endpoint. |
 | `ADMIN_API_KEY` | API key for admin endpoints (e.g. test-alert) |
 | `APP_URL` | Frontend URL (for confirmation/unsubscribe links) |
 | `PUBLIC_API_URL` | This backend's public URL (no trailing slash). Enables RFC 8058 one-click unsubscribe headers on alert emails. Empty disables the one-click header. |
@@ -150,6 +151,7 @@ The project deploys as three Railway services:
 | GET | `/api/tides/upcoming?days=14` | Tide predictions with king tide flags |
 | POST | `/api/stripe/create-checkout-session` | Start a donation checkout |
 | POST | `/api/stripe/webhook` | Stripe webhook handler |
+| POST | `/api/webhooks/resend` | Resend delivery webhook (delivered, delayed, bounced, complained) |
 
 ## Analytics
 

@@ -16,6 +16,7 @@ from app.schemas.subscriber import (
     UnsubscribeResponse,
 )
 from app.services.notification import send_confirmation
+from app.services.subscriber_lifecycle import deactivate_and_erase
 
 router = APIRouter(prefix="/api", tags=["subscribers"])
 
@@ -109,16 +110,9 @@ def _unsubscribe(token: str, db: Session) -> UnsubscribeResponse:
     if not subscriber:
         raise HTTPException(status_code=404, detail="Invalid unsubscribe token")
 
-    # Privacy policy: personal data is deleted on unsubscribe. The row stays
-    # only as an anonymous record (dates and signup source) so churn can be
-    # counted. The token is kept so a repeated click on the same link is
-    # still a quiet success rather than an error; it identifies nothing.
-    if subscriber.unsubscribed_at is None:
-        subscriber.unsubscribed_at = datetime.now(timezone.utc)
-        subscriber.confirmed = False
-        subscriber.name = ""
-        subscriber.email = None
-        subscriber.phone = None
+    # Same rule as a bounce or spam complaint: stop sending and erase the
+    # personal fields, keeping an anonymous row (see subscriber_lifecycle).
+    if deactivate_and_erase(subscriber):
         db.commit()
 
     return UnsubscribeResponse(
