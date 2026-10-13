@@ -81,8 +81,12 @@ async def subscriber_stats(
     _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
-    total = db.query(Subscriber).count()
-    confirmed = db.query(Subscriber).filter(Subscriber.confirmed.is_(True)).count()
+    unsubscribed = (
+        db.query(Subscriber).filter(Subscriber.unsubscribed_at.isnot(None)).count()
+    )
+    active_rows = db.query(Subscriber).filter(Subscriber.unsubscribed_at.is_(None))
+    total = active_rows.count()
+    confirmed = active_rows.filter(Subscriber.confirmed.is_(True)).count()
     unconfirmed = total - confirmed
 
     email_only = (
@@ -117,6 +121,7 @@ async def subscriber_stats(
         total=total,
         confirmed=confirmed,
         unconfirmed=unconfirmed,
+        unsubscribed=unsubscribed,
         email_only=email_only,
         sms_only=sms_only,
         both=both,

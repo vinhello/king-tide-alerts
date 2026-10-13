@@ -443,3 +443,43 @@ async def test_send_alerts_real_run_returns_matching_plan(test_db):
     test_db.refresh(event)
     assert event.forty_eight_hour_alert_sent is True
     assert test_db.query(NotificationSent).count() == 1
+
+
+
+@pytest.mark.asyncio
+async def test_send_alerts_skips_unsubscribed(test_db):
+    from datetime import datetime, timedelta, timezone
+    from unittest.mock import AsyncMock, patch
+
+    from app.models.king_tide_event import KingTideEvent
+    from app.models.subscriber import NotificationPreference, Subscriber
+    from app.services.king_tide_detector import send_alerts
+
+    now = datetime.now(timezone.utc)
+    test_db.add(
+        Subscriber(
+            name="Stayed", email="stayed@example.com",
+            notification_preference=NotificationPreference.EMAIL,
+            unsubscribe_token="tok-stayed", confirmed=True,
+        )
+    )
+    test_db.add(
+        Subscriber(
+            name="Left", email="left@example.com",
+            notification_preference=NotificationPreference.EMAIL,
+            unsubscribe_token="tok-left", confirmed=True, unsubscribed_at=now,
+        )
+    )
+    test_db.add(
+        KingTideEvent(event_datetime=now + timedelta(days=2), predicted_height=6.4, station_id="9414290")
+    )
+    test_db.commit()
+
+    with patch(
+        "app.services.notification.send_king_tide_alert", new_callable=AsyncMock
+    ) as send_alert:
+        plan = await send_alerts(test_db)
+
+    assert plan.subscriber_count == 1
+    send_alert.assert_awaited_once()
+    assert send_alert.await_args.kwargs["subscriber"].email == "stayed@example.com"

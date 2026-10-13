@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { CheckCircle, Loader2 } from "lucide-react";
 import type { NotificationPreference, SubscribeRequest } from "../types";
 import { resendConfirmation, subscribe } from "../services/api";
+import { getSignupSource } from "../services/attribution";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -45,6 +46,7 @@ export default function SubscribeForm({ compact = false }: SubscribeFormProps) {
     const data: SubscribeRequest = {
       name,
       notification_preference: preference,
+      ...getSignupSource(),
     };
     if (preference === "email" || preference === "both") {
       data.email = email;

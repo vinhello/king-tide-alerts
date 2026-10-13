@@ -1,4 +1,5 @@
 import secrets
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -45,6 +46,19 @@ async def subscribe(
     if data.email:
         existing = db.query(Subscriber).filter(Subscriber.email == data.email).first()
         if existing:
+            if existing.unsubscribed_at is not None:
+                # Came back after unsubscribing: reactivate the same record as a
+                # fresh, unconfirmed signup and record where it came from.
+                existing.unsubscribed_at = None
+                existing.confirmed = False
+                existing.confirmed_at = None
+                existing.name = data.name
+                existing.notification_preference = data.notification_preference
+                _apply_signup_source(existing, data)
+                db.commit()
+                db.refresh(existing)
+                background_tasks.add_task(send_confirmation, existing)
+                return existing
             if existing.confirmed:
                 raise HTTPException(status_code=400, detail="Email already subscribed")
             # Signed up before but never confirmed: resend rather than dead-end.
@@ -67,6 +81,7 @@ async def subscribe(
         unsubscribe_token=secrets.token_urlsafe(32),
         confirmed=False,
     )
+    _apply_signup_source(subscriber, data)
     db.add(subscriber)
     db.commit()
     db.refresh(subscriber)
@@ -83,8 +98,16 @@ async def confirm_subscription(token: str, db: Session = Depends(get_db)):
     )
     if not subscriber:
         raise HTTPException(status_code=404, detail="Invalid confirmation token")
+    if subscriber.unsubscribed_at is not None:
+        # An old confirmation link must not silently reactivate someone who
+        # unsubscribed. They can sign up again from the site.
+        raise HTTPException(
+            status_code=410, detail="This subscription was cancelled. Sign up again to restart it."
+        )
 
     subscriber.confirmed = True
+    if subscriber.confirmed_at is None:
+        subscriber.confirmed_at = datetime.now(timezone.utc)
     db.commit()
 
     return ConfirmResponse(
@@ -100,8 +123,10 @@ async def unsubscribe(token: str, db: Session = Depends(get_db)):
     if not subscriber:
         raise HTTPException(status_code=404, detail="Invalid unsubscribe token")
 
-    db.delete(subscriber)
-    db.commit()
+    # Keep the row: churn stays measurable and a later signup reactivates it.
+    if subscriber.unsubscribed_at is None:
+        subscriber.unsubscribed_at = datetime.now(timezone.utc)
+        db.commit()
 
     return UnsubscribeResponse(
         message="You've been unsubscribed from King Tide Alerts."
@@ -125,6 +150,18 @@ async def resend_confirmation(
     subscriber = (
         db.query(Subscriber).filter(Subscriber.email == str(data.email)).first()
     )
-    if subscriber is not None and not subscriber.confirmed:
+    if (
+        subscriber is not None
+        and not subscriber.confirmed
+        and subscriber.unsubscribed_at is None
+    ):
         background_tasks.add_task(send_confirmation, subscriber)
     return ResendConfirmationResponse(message=RESEND_MESSAGE)
+
+
+def _apply_signup_source(subscriber: Subscriber, data: SubscribeRequest) -> None:
+    subscriber.signup_referrer = data.signup_referrer
+    subscriber.signup_utm_source = data.signup_utm_source
+    subscriber.signup_utm_medium = data.signup_utm_medium
+    subscriber.signup_utm_campaign = data.signup_utm_campaign
+    subscriber.signup_landing_path = data.signup_landing_path

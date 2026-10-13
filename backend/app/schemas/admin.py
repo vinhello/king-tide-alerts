@@ -8,6 +8,7 @@ class SubscriberStats(BaseModel):
     total: int
     confirmed: int
     unconfirmed: int
+    unsubscribed: int = 0
     email_only: int
     sms_only: int
     both: int
