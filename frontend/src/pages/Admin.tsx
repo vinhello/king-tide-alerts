@@ -232,6 +232,7 @@ function SubscriberSection({ stats }: SubscriberSectionProps) {
         <StatCard label="Total subscribers" value={stats.total} />
         <StatCard label="Confirmed" value={stats.confirmed} />
         <StatCard label="Unconfirmed" value={stats.unconfirmed} />
+        <StatCard label="Unsubscribed" value={stats.unsubscribed ?? 0} sub="kept on record" />
         <StatCard label="Email only" value={stats.email_only} />
         <StatCard label="SMS only" value={stats.sms_only} />
         <StatCard label="Email + SMS" value={stats.both} />

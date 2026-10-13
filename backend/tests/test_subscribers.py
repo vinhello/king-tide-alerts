@@ -193,29 +193,154 @@ def test_confirm_subscription(client, test_db):
     assert subscriber.confirmed is True
 
 
-def test_unsubscribe(client, test_db):
-    """Unsubscribe via token should delete subscriber."""
+def test_unsubscribe_keeps_row_and_is_idempotent(client, test_db):
+    """Unsubscribing records when, keeps the record, and can be repeated safely."""
+    from app.models.subscriber import Subscriber
+
     with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
         client.post(
             "/api/subscribe",
+            json={"name": "Test", "email": "bye@example.com", "notification_preference": "email"},
+        )
+    sub = test_db.query(Subscriber).filter(Subscriber.email == "bye@example.com").first()
+
+    first = client.get(f"/api/unsubscribe/{sub.unsubscribe_token}")
+    assert first.status_code == 200
+    test_db.refresh(sub)
+    assert sub.unsubscribed_at is not None
+    stamp = sub.unsubscribed_at
+
+    second = client.get(f"/api/unsubscribe/{sub.unsubscribe_token}")
+    assert second.status_code == 200
+    test_db.refresh(sub)
+    assert sub.unsubscribed_at == stamp
+    assert test_db.query(Subscriber).filter(Subscriber.email == "bye@example.com").count() == 1
+
+
+def test_unsubscribe_invalid_token(client):
+    assert client.get("/api/unsubscribe/nope").status_code == 404
+
+
+def test_subscribe_stores_signup_source(client, test_db):
+    from app.models.subscriber import Subscriber
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
+        response = client.post(
+            "/api/subscribe",
             json={
-                "name": "Unsub Me",
-                "email": "unsub@example.com",
-                "notification_preference": "email",
+                "name": "Test", "email": "src@example.com", "notification_preference": "email",
+                "signup_referrer": "https://nextdoor.com/p/abc",
+                "signup_utm_source": "nextdoor", "signup_utm_medium": "social",
+                "signup_utm_campaign": "oct-flood", "signup_landing_path": "/",
+            },
+        )
+    assert response.status_code == 201
+    sub = test_db.query(Subscriber).filter(Subscriber.email == "src@example.com").first()
+    assert sub.signup_referrer == "https://nextdoor.com/p/abc"
+    assert sub.signup_utm_source == "nextdoor"
+    assert sub.signup_utm_medium == "social"
+    assert sub.signup_utm_campaign == "oct-flood"
+    assert sub.signup_landing_path == "/"
+
+
+def test_subscribe_source_is_optional(client, test_db):
+    from app.models.subscriber import Subscriber
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
+        response = client.post(
+            "/api/subscribe",
+            json={"name": "Test", "email": "nosrc@example.com", "notification_preference": "email"},
+        )
+    assert response.status_code == 201
+    sub = test_db.query(Subscriber).filter(Subscriber.email == "nosrc@example.com").first()
+    assert sub.signup_referrer is None and sub.signup_utm_source is None
+
+
+def test_confirm_sets_confirmed_at_once(client, test_db):
+    from app.models.subscriber import Subscriber
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
+        client.post(
+            "/api/subscribe",
+            json={"name": "Test", "email": "when@example.com", "notification_preference": "email"},
+        )
+    sub = test_db.query(Subscriber).filter(Subscriber.email == "when@example.com").first()
+    assert sub.confirmed_at is None
+
+    assert client.get(f"/api/confirm/{sub.unsubscribe_token}").status_code == 200
+    test_db.refresh(sub)
+    assert sub.confirmed is True and sub.confirmed_at is not None
+    first_stamp = sub.confirmed_at
+
+    assert client.get(f"/api/confirm/{sub.unsubscribe_token}").status_code == 200
+    test_db.refresh(sub)
+    assert sub.confirmed_at == first_stamp
+
+
+def test_confirm_after_unsubscribe_is_refused(client, test_db):
+    from app.models.subscriber import Subscriber
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock):
+        client.post(
+            "/api/subscribe",
+            json={"name": "Test", "email": "gone@example.com", "notification_preference": "email"},
+        )
+    sub = test_db.query(Subscriber).filter(Subscriber.email == "gone@example.com").first()
+    client.get(f"/api/unsubscribe/{sub.unsubscribe_token}")
+
+    response = client.get(f"/api/confirm/{sub.unsubscribe_token}")
+    assert response.status_code == 410
+    test_db.refresh(sub)
+    assert sub.confirmed is False and sub.unsubscribed_at is not None
+
+
+def test_resubscribe_after_unsubscribe_reactivates_same_row(client, test_db):
+    from app.models.subscriber import Subscriber
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock) as mock_send:
+        client.post(
+            "/api/subscribe",
+            json={"name": "Old Name", "email": "back@example.com", "notification_preference": "email"},
+        )
+        sub = test_db.query(Subscriber).filter(Subscriber.email == "back@example.com").first()
+        client.get(f"/api/confirm/{sub.unsubscribe_token}")
+        client.get(f"/api/unsubscribe/{sub.unsubscribe_token}")
+        mock_send.reset_mock()
+
+        response = client.post(
+            "/api/subscribe",
+            json={
+                "name": "New Name", "email": "back@example.com", "notification_preference": "email",
+                "signup_utm_source": "flyer",
             },
         )
 
-    subscriber = test_db.query(Subscriber).filter_by(email="unsub@example.com").first()
-    token = subscriber.unsubscribe_token
+    assert response.status_code == 201
+    assert response.json()["id"] == str(sub.id)
+    assert test_db.query(Subscriber).filter(Subscriber.email == "back@example.com").count() == 1
+    test_db.refresh(sub)
+    assert sub.unsubscribed_at is None
+    assert sub.confirmed is False and sub.confirmed_at is None
+    assert sub.name == "New Name"
+    assert sub.signup_utm_source == "flyer"
+    mock_send.assert_called_once()
 
-    response = client.get(f"/api/unsubscribe/{token}")
+
+def test_resend_confirmation_skips_unsubscribed(client, test_db):
+    from app.models.subscriber import Subscriber
+
+    with patch("app.routers.subscribers.send_confirmation", new_callable=AsyncMock) as mock_send:
+        client.post(
+            "/api/subscribe",
+            json={"name": "Test", "email": "left@example.com", "notification_preference": "email"},
+        )
+        sub = test_db.query(Subscriber).filter(Subscriber.email == "left@example.com").first()
+        client.get(f"/api/unsubscribe/{sub.unsubscribe_token}")
+        mock_send.reset_mock()
+        response = client.post("/api/resend-confirmation", json={"email": "left@example.com"})
+
     assert response.status_code == 200
-    assert "unsubscribed" in response.json()["message"].lower()
-
-    # Verify deleted
-    assert (
-        test_db.query(Subscriber).filter_by(email="unsub@example.com").first() is None
-    )
+    mock_send.assert_not_called()
 
 
 def test_invalid_token_returns_404(client):

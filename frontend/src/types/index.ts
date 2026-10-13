@@ -5,6 +5,12 @@ export interface SubscribeRequest {
   email?: string;
   phone?: string;
   notification_preference: NotificationPreference;
+  /** Optional attribution captured on first page load. */
+  signup_referrer?: string;
+  signup_utm_source?: string;
+  signup_utm_medium?: string;
+  signup_utm_campaign?: string;
+  signup_landing_path?: string;
 }
 
 export interface SubscriberResponse {
@@ -87,6 +93,7 @@ export interface SubscriberStats {
   total: number;
   confirmed: number;
   unconfirmed: number;
+  unsubscribed?: number;
   email_only: number;
   sms_only: number;
   both: number;

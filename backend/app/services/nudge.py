@@ -44,6 +44,7 @@ def find_unconfirmed(db: Session, window_days: int) -> list[Subscriber]:
         db.query(Subscriber)
         .filter(
             Subscriber.confirmed.is_(False),
+            Subscriber.unsubscribed_at.is_(None),
             Subscriber.email.isnot(None),
             Subscriber.created_at >= cutoff,
             ~Subscriber.id.in_(already_nudged),

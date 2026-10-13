@@ -148,7 +148,9 @@ async def send_alerts(db: Session, dry_run: bool = False) -> AlertRunPlan:
     today = now.date()
 
     subscribers = (
-        db.query(Subscriber).filter(Subscriber.confirmed.is_(True)).all()
+        db.query(Subscriber)
+        .filter(Subscriber.confirmed.is_(True), Subscriber.unsubscribed_at.is_(None))
+        .all()
     )
     plan = AlertRunPlan(dry_run=dry_run, subscriber_count=len(subscribers))
 

@@ -124,3 +124,14 @@ def test_confirmation_email_says_free():
     html = confirmation_email("Vince", "https://x/confirm/t")
     assert "It's free, and you can unsubscribe any time" in html
     assert "King Tide Alerts for the SF Bay Area" not in html
+
+
+
+def test_find_unconfirmed_excludes_unsubscribed(test_db):
+    kept = _signup(test_db, "kept@example.com")
+    gone = _signup(test_db, "gone@example.com")
+    gone.unsubscribed_at = datetime.now(timezone.utc)
+    test_db.commit()
+
+    found = find_unconfirmed(test_db, window_days=30)
+    assert [s.id for s in found] == [kept.id]

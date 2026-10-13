@@ -299,3 +299,24 @@ def test_alert_preview_with_nothing_due(client, test_db):
     data = response.json()
     assert data["alerts"] == []
     assert data["sample_email_html"] is None
+
+
+
+def test_stats_buckets_exclude_unsubscribed(client, test_db):
+    _create_confirmed_subscriber(test_db, email="active@example.com")
+    gone = _create_confirmed_subscriber(test_db, email="gone@example.com")
+    gone.unsubscribed_at = datetime.now(timezone.utc)
+    test_db.add(
+        Subscriber(
+            name="Pending", email="pending@example.com", notification_preference="email",
+            unsubscribe_token="tok-pending", confirmed=False,
+        )
+    )
+    test_db.commit()
+
+    response = client.get("/api/admin/stats", headers={"x-admin-password": "test-password"})
+    data = response.json()
+    assert data["total"] == 2
+    assert data["confirmed"] == 1
+    assert data["unconfirmed"] == 1
+    assert data["unsubscribed"] == 1

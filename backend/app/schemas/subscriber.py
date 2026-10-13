@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 from app.models.subscriber import NotificationPreference
 
@@ -11,6 +11,12 @@ class SubscribeRequest(BaseModel):
     email: str | None = None
     phone: str | None = None
     notification_preference: NotificationPreference
+    # Optional attribution captured by the frontend on first page load.
+    signup_referrer: str | None = Field(default=None, max_length=500)
+    signup_utm_source: str | None = Field(default=None, max_length=100)
+    signup_utm_medium: str | None = Field(default=None, max_length=100)
+    signup_utm_campaign: str | None = Field(default=None, max_length=100)
+    signup_landing_path: str | None = Field(default=None, max_length=200)
 
     @model_validator(mode="after")
     def validate_contact_info(self) -> "SubscribeRequest":
