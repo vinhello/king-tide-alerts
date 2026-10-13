@@ -53,6 +53,8 @@ describe("TideChart", () => {
     });
 
     expect(screen.getByText(/upcoming tides/i)).toBeInTheDocument();
+    // The legend names the line itself, not only the threshold markers
+    expect(screen.getByText("Predicted")).toBeInTheDocument();
   });
 
   it("shows king tide threshold line", async () => {
