@@ -8,7 +8,7 @@ from app.config import settings
 from app.models.king_tide_event import KingTideEvent
 from app.models.notification_sent import NotificationSent, NotificationType
 from app.models.subscriber import Subscriber
-from app.services import noaa, notification
+from app.services import email_events, noaa, notification
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +198,12 @@ async def send_alerts(db: Session, dry_run: bool = False) -> AlertRunPlan:
 
     if not dry_run:
         db.commit()
+        relinked = email_events.relink_orphans(db)
+        if relinked:
+            logger.info(
+                f"Linked {relinked} delivery events that arrived before "
+                f"their send was recorded"
+            )
 
     seven_day_count = sum(
         1 for a in plan.alerts if a.notification_type is NotificationType.SEVEN_DAY_ALERT
@@ -322,5 +328,9 @@ async def _send_period_alert(
                 provider_message_id=message_id,
             )
         )
+        # Commit per send: Resend's delivery webhook can arrive within
+        # seconds and must find this row. It also keeps the record of an
+        # email already sent if the run dies before the loop finishes.
+        db.commit()
 
     return recipients
