@@ -324,3 +324,50 @@ def test_suppressed_subscriber_gets_no_further_alerts(client, test_db):
     plan = asyncio.run(send_alerts(test_db, dry_run=True))
 
     assert plan.subscriber_count == 0
+
+
+# --- events that outrun their send row --------------------------------------
+
+
+def test_event_arriving_before_the_send_row_is_linked_afterwards(client, test_db):
+    from app.services import email_events
+
+    subscriber = Subscriber(
+        name="Rider",
+        email="rider@example.com",
+        notification_preference="email",
+        unsubscribe_token="token-rider",
+        confirmed=True,
+    )
+    test_db.add(subscriber)
+    test_db.commit()
+    test_db.refresh(subscriber)
+
+    # Resend reports the delivery before the run has committed the row.
+    response = _post(client, _event("email.delivered", "re_early"))
+    assert response.json()["result"] == "recorded"
+    event = test_db.query(EmailEvent).one()
+    assert event.notification_id is None
+    assert event.subscriber_id == subscriber.id
+
+    # An unrelated orphan (signup confirmation) has no row and must stay as is.
+    _post(client, _event("email.delivered", "re_confirmation"), svix_id="msg_conf")
+
+    sent = NotificationSent(
+        subscriber_id=subscriber.id,
+        notification_type=NotificationType.SEVEN_DAY_ALERT,
+        provider_message_id="re_early",
+    )
+    test_db.add(sent)
+    test_db.commit()
+    test_db.refresh(sent)
+
+    assert email_events.relink_orphans(test_db) == 1
+    assert email_events.relink_orphans(test_db) == 0
+    test_db.refresh(event)
+    assert event.notification_id == sent.id
+    unrelated = test_db.query(EmailEvent).filter(EmailEvent.svix_id == "msg_conf").one()
+    assert unrelated.notification_id is None
+
+    stats = client.get("/api/admin/notifications", headers=ADMIN).json()
+    assert stats["recent"][0]["delivery_status"] == "delivered"

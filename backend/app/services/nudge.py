@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.models.notification_sent import NotificationSent, NotificationType
 from app.models.subscriber import Subscriber
-from app.services import notification
+from app.services import email_events, notification
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,9 @@ async def nudge_unconfirmed(
                 provider_message_id=message_id,
             )
         )
+        # Commit per send so the delivery webhook finds the row (see detector).
+        db.commit()
         outcome.sent += 1
-    db.commit()
+    email_events.relink_orphans(db)
     logger.info(f"Nudge sent to {outcome.sent} unconfirmed signups")
     return outcome

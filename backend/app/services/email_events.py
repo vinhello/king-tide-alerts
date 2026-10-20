@@ -99,6 +99,31 @@ def record_event(db: Session, svix_id: str, event: Mapping[str, Any]) -> str:
     return outcome
 
 
+def relink_orphans(db: Session) -> int:
+    """Attach events that arrived before their send row was committed.
+
+    Resend can report a delivery within seconds of a send, so a webhook may
+    land before the alert run has committed the row for that message. Such
+    an event is stored without a notification link; this pairs it up by
+    message id afterwards. Events for emails that never get a row (signup
+    confirmations) stay as they are. Returns how many were linked.
+    """
+    pairs = (
+        db.query(EmailEvent, NotificationSent.id)
+        .join(
+            NotificationSent,
+            NotificationSent.provider_message_id == EmailEvent.provider_message_id,
+        )
+        .filter(EmailEvent.notification_id.is_(None))
+        .all()
+    )
+    for event, notification_id in pairs:
+        event.notification_id = notification_id
+    if pairs:
+        db.commit()
+    return len(pairs)
+
+
 def should_suppress(event_type: EmailEventType, bounce_type: str | None) -> bool:
     """A spam complaint or a permanent (hard) bounce ends the subscription.
 

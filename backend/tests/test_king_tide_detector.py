@@ -485,3 +485,65 @@ async def test_send_alerts_skips_unsubscribed(test_db):
     assert plan.subscriber_count == 1
     send_alert.assert_awaited_once()
     assert send_alert.await_args.kwargs["subscriber"].email == "stayed@example.com"
+
+
+@pytest.mark.asyncio
+async def test_each_send_is_committed_and_early_delivery_events_get_linked(test_db):
+    """The row for a sent alert exists before the next send starts, and a
+    delivery event that arrived before the run is linked once it finishes."""
+    from unittest.mock import AsyncMock, patch
+
+    from app.models.email_event import EmailEvent, EmailEventType
+    from app.models.king_tide_event import KingTideEvent
+    from app.models.notification_sent import NotificationSent
+    from app.models.subscriber import Subscriber
+
+    for i in range(2):
+        test_db.add(
+            Subscriber(
+                name=f"Rider {i}",
+                email=f"rider{i}@example.com",
+                notification_preference="email",
+                unsubscribe_token=f"token-{i}",
+                confirmed=True,
+            )
+        )
+    test_db.add(
+        KingTideEvent(
+            event_datetime=datetime.now(timezone.utc) + timedelta(days=7),
+            predicted_height=6.4,
+            station_id="9414290",
+        )
+    )
+    # A delivery report that beat the run: no notification to link to yet.
+    test_db.add(
+        EmailEvent(
+            svix_id="msg_early",
+            provider_message_id="re_test",
+            event_type=EmailEventType.DELIVERED,
+            occurred_at=datetime.now(timezone.utc),
+        )
+    )
+    test_db.commit()
+
+    committed_before_second_send = []
+
+    async def fake_send(**kwargs):
+        committed_before_second_send.append(
+            test_db.query(NotificationSent).filter(
+                NotificationSent.provider_message_id == "re_test"
+            ).count()
+        )
+        return "re_test"
+
+    with patch(
+        "app.services.king_tide_detector.notification.send_king_tide_alert",
+        new=AsyncMock(side_effect=fake_send),
+    ), patch.object(test_db, "commit", wraps=test_db.commit) as commit_spy:
+        await send_alerts(test_db)
+
+    # Second send saw the first row already stored; commits happened per send.
+    assert committed_before_second_send == [0, 1]
+    assert commit_spy.call_count >= 2
+    early = test_db.query(EmailEvent).filter(EmailEvent.svix_id == "msg_early").one()
+    assert early.notification_id is not None
