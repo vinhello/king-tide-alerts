@@ -187,8 +187,10 @@ async def send_alerts(db: Session, dry_run: bool = False) -> AlertRunPlan:
                 plan, dry_run,
             )
 
-        # 48-hour alert: period starts in 2 days
-        if days_until == 2:
+        # 48-hour reminder: period starts in 2 days. A run missed on day 2 is
+        # caught on day 1 (24 hours ahead); the sent flag on the period's
+        # events keeps it to one reminder per period either way.
+        if 1 <= days_until <= 2:
             await _alert_period_once(
                 db, subscribers, period, days_until,
                 NotificationType.FORTY_EIGHT_HOUR_REMINDER,

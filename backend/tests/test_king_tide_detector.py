@@ -547,3 +547,66 @@ async def test_each_send_is_committed_and_early_delivery_events_get_linked(test_
     assert commit_spy.call_count >= 2
     early = test_db.query(EmailEvent).filter(EmailEvent.svix_id == "msg_early").one()
     assert early.notification_id is not None
+
+
+def _subscriber_and_event(db, days_ahead: int, reminder_sent: bool = False):
+    from app.models.king_tide_event import KingTideEvent
+    from app.models.subscriber import Subscriber
+
+    db.add(
+        Subscriber(
+            name="Rider",
+            email="rider@example.com",
+            notification_preference="email",
+            unsubscribe_token="token-rider",
+            confirmed=True,
+        )
+    )
+    db.add(
+        KingTideEvent(
+            event_datetime=datetime.now(timezone.utc) + timedelta(days=days_ahead),
+            predicted_height=6.4,
+            station_id="9414290",
+            seven_day_alert_sent=True,
+            forty_eight_hour_alert_sent=reminder_sent,
+        )
+    )
+    db.commit()
+
+
+@pytest.mark.asyncio
+async def test_reminder_is_sent_on_day_one_when_the_day_two_run_was_missed(test_db):
+    from unittest.mock import AsyncMock, patch
+
+    from app.models.notification_sent import NotificationSent, NotificationType
+
+    _subscriber_and_event(test_db, days_ahead=1)
+    with patch(
+        "app.services.king_tide_detector.notification.send_king_tide_alert",
+        new_callable=AsyncMock, return_value="re_test",
+    ) as mock_send:
+        plan = await send_alerts(test_db)
+
+    mock_send.assert_called_once()
+    assert mock_send.call_args.kwargs["days_until"] == 1
+    sent = test_db.query(NotificationSent).one()
+    assert sent.notification_type == NotificationType.FORTY_EIGHT_HOUR_REMINDER
+    assert plan.alerts[0].days_until == 1
+
+
+@pytest.mark.asyncio
+async def test_reminder_is_not_repeated_on_day_one_after_a_day_two_send(test_db):
+    from unittest.mock import AsyncMock, patch
+
+    from app.models.notification_sent import NotificationSent
+
+    _subscriber_and_event(test_db, days_ahead=1, reminder_sent=True)
+    with patch(
+        "app.services.king_tide_detector.notification.send_king_tide_alert",
+        new_callable=AsyncMock, return_value="re_test",
+    ) as mock_send:
+        plan = await send_alerts(test_db)
+
+    mock_send.assert_not_called()
+    assert test_db.query(NotificationSent).count() == 0
+    assert plan.alerts == []
