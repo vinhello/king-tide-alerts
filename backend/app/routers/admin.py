@@ -1,4 +1,5 @@
 import hmac
+import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
@@ -28,9 +29,15 @@ from app.schemas.admin import (
 )
 from app.rate_limit import limiter
 from app.services import email_events, nudge
-from app.services.king_tide_detector import send_alerts
+from app.services.king_tide_detector import (
+    AlertRunPlan,
+    detect_and_store_king_tides,
+    send_alerts,
+)
 from app.services.notification import build_king_tide_alert_email, send_king_tide_alert
 from app.utils.email_templates import confirmation_reminder_email
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -304,7 +311,31 @@ async def preview_alert_run(
 ):
     """Show what the daily alert run would send right now. Sends nothing."""
     plan = await send_alerts(db, dry_run=True)
+    return _plan_to_preview(plan)
 
+
+@router.post("/alerts/run", response_model=AlertRunPreview)
+@limiter.limit("5/minute")
+async def run_alerts_now(
+    request: Request,
+    dry_run: bool = Query(default=True),
+    _key: str = Depends(verify_admin_auth),
+    db: Session = Depends(get_db),
+):
+    """Run the daily check by hand, for recovery when a scheduled run was missed.
+
+    The default dry run sends nothing and reports the plan. With dry_run=false
+    it does exactly what the 6 AM job does: fetch and store new events, then
+    send whatever is due. Alerts already sent for a period are never repeated.
+    """
+    if not dry_run:
+        logger.warning("Manual alert run triggered from the admin API")
+        await detect_and_store_king_tides(db)
+    plan = await send_alerts(db, dry_run=dry_run)
+    return _plan_to_preview(plan)
+
+
+def _plan_to_preview(plan: AlertRunPlan) -> AlertRunPreview:
     sample_subject = None
     sample_html = None
     if plan.alerts:
@@ -324,7 +355,7 @@ async def preview_alert_run(
         )
 
     return AlertRunPreview(
-        dry_run=True,
+        dry_run=plan.dry_run,
         subscriber_count=plan.subscriber_count,
         alerts=[
             PlannedAlert(

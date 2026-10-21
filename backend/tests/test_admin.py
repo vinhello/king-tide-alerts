@@ -320,3 +320,73 @@ def test_stats_buckets_exclude_unsubscribed(client, test_db):
     assert data["confirmed"] == 1
     assert data["unconfirmed"] == 1
     assert data["unsubscribed"] == 1
+
+
+def test_alert_run_requires_auth(client):
+    assert client.post("/api/admin/alerts/run").status_code == 401
+
+
+def test_alert_run_dry_run_by_default_sends_nothing(client, test_db):
+    _create_confirmed_subscriber(test_db)
+    test_db.add(
+        KingTideEvent(
+            event_datetime=datetime.now(timezone.utc) + timedelta(days=2),
+            predicted_height=6.3,
+            station_id="9414290",
+            seven_day_alert_sent=True,
+        )
+    )
+    test_db.commit()
+
+    with patch(
+        "app.services.king_tide_detector.notification.send_king_tide_alert",
+        new_callable=AsyncMock, return_value="re_test",
+    ) as mock_send, patch(
+        "app.routers.admin.detect_and_store_king_tides", new_callable=AsyncMock
+    ) as mock_detect:
+        response = client.post(
+            "/api/admin/alerts/run", headers={"x-admin-password": "test-password"}
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["dry_run"] is True
+    assert data["alerts"][0]["recipient_count"] == 1
+    mock_send.assert_not_called()
+    mock_detect.assert_not_called()
+    assert test_db.query(NotificationSent).count() == 0
+
+
+def test_alert_run_for_real_detects_then_sends_once(client, test_db):
+    _create_confirmed_subscriber(test_db)
+    test_db.add(
+        KingTideEvent(
+            event_datetime=datetime.now(timezone.utc) + timedelta(days=2),
+            predicted_height=6.3,
+            station_id="9414290",
+            seven_day_alert_sent=True,
+        )
+    )
+    test_db.commit()
+
+    with patch(
+        "app.services.king_tide_detector.notification.send_king_tide_alert",
+        new_callable=AsyncMock, return_value="re_test",
+    ) as mock_send, patch(
+        "app.routers.admin.detect_and_store_king_tides", new_callable=AsyncMock
+    ) as mock_detect:
+        first = client.post(
+            "/api/admin/alerts/run?dry_run=false",
+            headers={"x-admin-password": "test-password"},
+        )
+        second = client.post(
+            "/api/admin/alerts/run?dry_run=false",
+            headers={"x-admin-password": "test-password"},
+        )
+
+    assert first.status_code == 200 and first.json()["dry_run"] is False
+    assert first.json()["alerts"][0]["notification_type"] == "forty_eight_hour_reminder"
+    assert mock_detect.await_count == 2
+    mock_send.assert_called_once()
+    assert second.json()["alerts"] == []
+    assert test_db.query(NotificationSent).count() == 1

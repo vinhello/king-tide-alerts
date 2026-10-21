@@ -126,7 +126,8 @@ def build_king_tide_alert_email(
     flood_end = peak_datetime + timedelta(hours=2)
 
     alert_label = "King Tide" if is_king_tide else "High Tide"
-    subject = f"🌊 {alert_label} Alert — {days_until} days away"
+    days_away = "1 day away" if days_until == 1 else f"{days_until} days away"
+    subject = f"🌊 {alert_label} Alert — {days_away}"
     html = king_tide_alert_email(
         name=name,
         date_range=date_range,

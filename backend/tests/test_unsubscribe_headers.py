@@ -96,3 +96,17 @@ def test_one_click_post_unsubscribes_idempotently(client, test_db):
 
 def test_one_click_post_rejects_unknown_token(client):
     assert client.post("/api/unsubscribe/nope").status_code == 404
+
+
+def test_subject_says_one_day_away_without_a_plural():
+    from datetime import datetime, timezone
+
+    from app.services.notification import build_king_tide_alert_email
+
+    when = datetime(2026, 10, 25, 12, 0, tzinfo=timezone.utc)
+    one, _ = build_king_tide_alert_email("A", when, when, when, 6.2, 1, "u")
+    two, _ = build_king_tide_alert_email("A", when, when, when, 6.2, 2, "u")
+    seven, _ = build_king_tide_alert_email("A", when, when, when, 6.2, 7, "u")
+    assert one.endswith("1 day away")
+    assert two.endswith("2 days away")
+    assert seven.endswith("7 days away")
