@@ -40,3 +40,19 @@ class CurrentTideStatus(BaseModel):
     hours_until_high_tide: float | None
     status: str
     threshold: float
+
+
+class TidePoint(BaseModel):
+    datetime: str
+    height: float
+
+
+class ObservedTidesResponse(BaseModel):
+    """Measured water levels for the past few days and the predictions for
+    the same hours. Empty lists when the gauge record is unavailable."""
+
+    observations: list[TidePoint]
+    predictions: list[TidePoint]
+    days: int
+    as_of: str
+    station_id: str
