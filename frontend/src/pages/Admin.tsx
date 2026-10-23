@@ -9,6 +9,7 @@ import {
   Activity,
   CheckCircle,
   XCircle,
+  TrendingUp,
 } from "lucide-react";
 import {
   LineChart,
@@ -20,11 +21,13 @@ import {
   Bar,
   CartesianGrid,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 import {
   getAdminHealth,
   getSubscriberStats,
   getNotificationStats,
+  getFunnelStats,
   getAdminEvents,
   nudgeUnconfirmed,
   sendTestAlert,
@@ -33,6 +36,7 @@ import type {
   SystemHealth,
   SubscriberStats,
   NotificationStats,
+  FunnelStats,
   AdminEvent,
   NudgeResult,
 } from "../types";
@@ -285,6 +289,203 @@ function SubscriberSection({ stats }: SubscriberSectionProps) {
           </ResponsiveContainer>
         </div>
       )}
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Funnel section
+// ---------------------------------------------------------------------------
+
+// Validated two-series palette: readable for all color vision, 3:1 on the card.
+const FUNNEL_SIGNUPS_COLOR = "#0A7EA4";
+const FUNNEL_CONFIRMED_COLOR = "#C2410C";
+
+function formatPercent(rate: number): string {
+  return `${Math.round(rate * 100)}%`;
+}
+
+function formatHours(hours: number | null): string {
+  if (hours === null) return "—";
+  if (hours < 1) return `${Math.round(hours * 60)} min`;
+  if (hours < 48) return `${Math.round(hours)} h`;
+  return `${(hours / 24).toFixed(1)} days`;
+}
+
+function formatWeek(iso: string): string {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+const thClass = "text-left px-3 py-2 text-muted-foreground font-medium whitespace-nowrap";
+const tdClass = "px-3 py-2 text-foreground";
+const numClass = "px-3 py-2 text-foreground text-right tabular-nums";
+
+const RUN_LABELS: Record<string, string> = {
+  seven_day_alert: "7-day alert",
+  forty_eight_hour_reminder: "48-hour reminder",
+};
+
+interface FunnelSectionProps {
+  stats: FunnelStats;
+}
+
+function FunnelSection({ stats }: FunnelSectionProps) {
+  const { all_time: allTime, last_30_days: recent } = stats;
+  return (
+    <Section
+      icon={<TrendingUp className="h-5 w-5 text-primary" aria-hidden="true" />}
+      title="Funnel"
+    >
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+        <StatCard
+          label="Confirmation rate"
+          value={formatPercent(allTime.confirmation_rate)}
+          sub={`${allTime.confirmed} of ${allTime.signups} signups, all time`}
+        />
+        <StatCard
+          label="Last 30 days"
+          value={formatPercent(recent.confirmation_rate)}
+          sub={`${recent.confirmed} of ${recent.signups} signups`}
+        />
+        <StatCard
+          label="Median time to confirm"
+          value={formatHours(allTime.median_hours_to_confirm)}
+          sub="where the confirmation time is recorded"
+        />
+        <StatCard
+          label="Unsubscribed, 30 days"
+          value={recent.unsubscribed}
+          sub={`${allTime.unsubscribed} all time`}
+        />
+        <StatCard
+          label="Nudges that worked"
+          value={`${allTime.confirmed_after_nudge} of ${allTime.nudged}`}
+          sub="confirmed after a reminder"
+        />
+      </div>
+
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-6">
+        <p className="text-sm font-medium text-foreground mb-4">Signups and confirmations per week, last 12 weeks</p>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={stats.weekly} margin={{ top: 4, right: 8, left: -20, bottom: 0 }} barGap={2}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis
+              dataKey="week_start"
+              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tickFormatter={formatWeek}
+              interval="preserveStartEnd"
+            />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+            <Tooltip
+              labelFormatter={(label) => (typeof label === "string" ? `Week of ${formatWeek(label)}` : String(label))}
+              contentStyle={{
+                background: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "8px",
+                fontSize: "12px",
+              }}
+            />
+            <Legend wrapperStyle={{ fontSize: "12px" }} />
+            <Bar dataKey="signups" name="Signups" fill={FUNNEL_SIGNUPS_COLOR} radius={[4, 4, 0, 0]} maxBarSize={18} />
+            <Bar dataKey="confirmed" name="Confirmed" fill={FUNNEL_CONFIRMED_COLOR} radius={[4, 4, 0, 0]} maxBarSize={18} />
+          </BarChart>
+        </ResponsiveContainer>
+        <details className="mt-3 text-sm">
+          <summary className="cursor-pointer text-muted-foreground">Weekly numbers as a table</summary>
+          <div className="overflow-x-auto mt-2">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th scope="col" className={thClass}>Week of</th>
+                  <th scope="col" className={`${thClass} text-right`}>Signups</th>
+                  <th scope="col" className={`${thClass} text-right`}>Confirmed</th>
+                  <th scope="col" className={`${thClass} text-right`}>Unsubscribed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.weekly.map((w) => (
+                  <tr key={w.week_start} className="border-b border-border last:border-0">
+                    <td className={tdClass}>{formatWeek(w.week_start)}</td>
+                    <td className={numClass}>{w.signups}</td>
+                    <td className={numClass}>{w.confirmed}</td>
+                    <td className={numClass}>{w.unsubscribed}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+          <p className="text-sm font-medium text-foreground px-4 py-3 border-b border-border">Signups by source, all time</p>
+          {stats.by_source.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-muted-foreground">No signups yet.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th scope="col" className={thClass}>Source</th>
+                  <th scope="col" className={`${thClass} text-right`}>Signups</th>
+                  <th scope="col" className={`${thClass} text-right`}>Confirmed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.by_source.map((s) => (
+                  <tr key={s.source} className="border-b border-border last:border-0">
+                    <td className={tdClass}>{s.source}</td>
+                    <td className={numClass}>{s.signups}</td>
+                    <td className={numClass}>
+                      {s.confirmed}
+                      <span className="text-muted-foreground"> ({s.signups ? formatPercent(s.confirmed / s.signups) : "—"})</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+          <p className="text-sm font-medium text-foreground px-4 py-3 border-b border-border">Delivery per alert run, newest first</p>
+          {stats.runs.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-muted-foreground">No alert runs yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th scope="col" className={thClass}>Run</th>
+                    <th scope="col" className={`${thClass} text-right`}>Sent</th>
+                    <th scope="col" className={`${thClass} text-right`}>Delivered</th>
+                    <th scope="col" className={`${thClass} text-right`}>Bounced</th>
+                    <th scope="col" className={`${thClass} text-right`}>Complaints</th>
+                    <th scope="col" className={`${thClass} text-right`}>Pending</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.runs.map((r) => (
+                    <tr key={`${r.date}-${r.notification_type}`} className="border-b border-border last:border-0">
+                      <td className={`${tdClass} whitespace-nowrap`}>
+                        {formatDate(`${r.date}T00:00:00`)}
+                        <span className="block text-xs text-muted-foreground">
+                          {RUN_LABELS[r.notification_type] ?? r.notification_type.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td className={numClass}>{r.sent}</td>
+                      <td className={numClass}>{r.delivered}</td>
+                      <td className={numClass}>{r.bounced}</td>
+                      <td className={numClass}>{r.complained}</td>
+                      <td className={numClass}>{r.no_outcome}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </Section>
   );
 }
@@ -752,6 +953,7 @@ interface DashboardData {
   health: SystemHealth;
   subscriberStats: SubscriberStats;
   notificationStats: NotificationStats;
+  funnelStats: FunnelStats;
   events: AdminEvent[];
 }
 
@@ -772,14 +974,15 @@ function Dashboard({ apiKey, onLogout }: DashboardProps) {
       setLoading(true);
       setError("");
       try {
-        const [health, subscriberStats, notificationStats, events] = await Promise.all([
+        const [health, subscriberStats, notificationStats, funnelStats, events] = await Promise.all([
           getAdminHealth(apiKey),
           getSubscriberStats(apiKey),
           getNotificationStats(apiKey),
+          getFunnelStats(apiKey),
           getAdminEvents(apiKey),
         ]);
         if (!cancelled) {
-          setData({ health, subscriberStats, notificationStats, events });
+          setData({ health, subscriberStats, notificationStats, funnelStats, events });
         }
       } catch {
         if (!cancelled) {
@@ -840,6 +1043,7 @@ function Dashboard({ apiKey, onLogout }: DashboardProps) {
           <div className="flex flex-col gap-10">
             <HealthBanner health={data.health} />
             <SubscriberSection stats={data.subscriberStats} />
+            <FunnelSection stats={data.funnelStats} />
             <NotificationSection stats={data.notificationStats} />
             <EventsSection events={data.events} />
             <TestAlertForm apiKey={apiKey} />

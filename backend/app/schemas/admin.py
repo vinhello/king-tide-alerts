@@ -104,3 +104,46 @@ class NudgeResult(BaseModel):
     sent: int
     sample_subject: Optional[str]
     sample_email_html: Optional[str]
+
+
+class FunnelStage(BaseModel):
+    signups: int
+    confirmed: int
+    confirmation_rate: float
+    median_hours_to_confirm: Optional[float]
+    unsubscribed: int
+    nudged: int
+    confirmed_after_nudge: int
+
+
+class FunnelSource(BaseModel):
+    source: str
+    signups: int
+    confirmed: int
+
+
+class FunnelWeek(BaseModel):
+    week_start: str
+    signups: int
+    confirmed: int
+    unsubscribed: int
+
+
+class FunnelRun(BaseModel):
+    date: str
+    notification_type: str
+    sent: int
+    delivered: int
+    bounced: int
+    complained: int
+    no_outcome: int
+
+
+class FunnelStats(BaseModel):
+    """Signup-to-delivery funnel for the admin page. Read-only."""
+
+    all_time: FunnelStage
+    last_30_days: FunnelStage
+    by_source: list[FunnelSource]
+    weekly: list[FunnelWeek]
+    runs: list[FunnelRun]

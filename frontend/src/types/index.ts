@@ -194,3 +194,45 @@ export interface NwsAlertsResponse {
   alerts: NwsAlert[];
   zones: string[];
 }
+
+// Signup-to-delivery funnel for the admin page.
+export interface FunnelStage {
+  signups: number;
+  confirmed: number;
+  confirmation_rate: number;
+  median_hours_to_confirm: number | null;
+  unsubscribed: number;
+  nudged: number;
+  confirmed_after_nudge: number;
+}
+
+export interface FunnelSource {
+  source: string;
+  signups: number;
+  confirmed: number;
+}
+
+export interface FunnelWeek {
+  week_start: string;
+  signups: number;
+  confirmed: number;
+  unsubscribed: number;
+}
+
+export interface FunnelRun {
+  date: string;
+  notification_type: string;
+  sent: number;
+  delivered: number;
+  bounced: number;
+  complained: number;
+  no_outcome: number;
+}
+
+export interface FunnelStats {
+  all_time: FunnelStage;
+  last_30_days: FunnelStage;
+  by_source: FunnelSource[];
+  weekly: FunnelWeek[];
+  runs: FunnelRun[];
+}

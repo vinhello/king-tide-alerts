@@ -17,6 +17,11 @@ from app.schemas.admin import (
     AdminEvent,
     AlertRunPreview,
     DailyCount,
+    FunnelRun,
+    FunnelSource,
+    FunnelStage,
+    FunnelStats,
+    FunnelWeek,
     GrowthPoint,
     NotificationHistoryItem,
     NotificationStats,
@@ -28,7 +33,7 @@ from app.schemas.admin import (
     TestAlertResponse,
 )
 from app.rate_limit import limiter
-from app.services import email_events, nudge
+from app.services import email_events, funnel, nudge
 from app.services.king_tide_detector import (
     AlertRunPlan,
     detect_and_store_king_tides,
@@ -134,6 +139,68 @@ async def subscriber_stats(
         sms_only=sms_only,
         both=both,
         growth=growth,
+    )
+
+
+@router.get("/funnel", response_model=FunnelStats)
+@limiter.limit("10/minute")
+async def funnel_stats(
+    request: Request,
+    _key: str = Depends(verify_admin_auth),
+    db: Session = Depends(get_db),
+):
+    """Signup to confirmation to delivery, all time and last 30 days. Read-only."""
+    first_nudge: dict = {}
+    for sub_id, sent_at in (
+        db.query(NotificationSent.subscriber_id, NotificationSent.sent_at)
+        .filter(NotificationSent.notification_type == NotificationType.CONFIRMATION)
+        .all()
+    ):
+        moment = funnel.aware_required(sent_at)
+        if sub_id not in first_nudge or moment < first_nudge[sub_id]:
+            first_nudge[sub_id] = moment
+
+    rows = [
+        funnel.SubscriberRow(
+            created_at=funnel.aware_required(s.created_at),
+            confirmed=bool(s.confirmed),
+            confirmed_at=funnel.aware(s.confirmed_at),
+            unsubscribed_at=funnel.aware(s.unsubscribed_at),
+            utm_source=s.signup_utm_source,
+            referrer=s.signup_referrer,
+            landing_path=s.signup_landing_path,
+            nudged_at=first_nudge.get(s.id),
+        )
+        for s in db.query(Subscriber).all()
+    ]
+
+    outcomes: dict = {}
+    for notification_id, event_type in (
+        db.query(EmailEvent.notification_id, EmailEvent.event_type)
+        .filter(EmailEvent.notification_id.isnot(None))
+        .all()
+    ):
+        outcomes.setdefault(notification_id, set()).add(event_type)
+    sends = [
+        funnel.SendRow(
+            notification_type=n.notification_type,
+            sent_at=funnel.aware_required(n.sent_at),
+            outcomes=frozenset(outcomes.get(n.id, ())),
+        )
+        for n in db.query(NotificationSent).all()
+    ]
+
+    now = datetime.now(timezone.utc)
+
+    def stage_out(s: funnel.Stage) -> FunnelStage:
+        return FunnelStage(**s.__dict__)
+
+    return FunnelStats(
+        all_time=stage_out(funnel.stage(rows, None)),
+        last_30_days=stage_out(funnel.stage(rows, now - timedelta(days=30))),
+        by_source=[FunnelSource(**s.__dict__) for s in funnel.by_source(rows)],
+        weekly=[FunnelWeek(**w.__dict__) for w in funnel.weekly(rows, now)],
+        runs=[FunnelRun(**r.__dict__) for r in funnel.runs(sends)],
     )
 
 
