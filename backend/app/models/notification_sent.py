@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import Enum, ForeignKey, String, Uuid
+from sqlalchemy import DateTime, Enum, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -30,6 +30,7 @@ class NotificationSent(Base):
         nullable=False,
     )
     sent_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )

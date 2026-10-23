@@ -43,10 +43,12 @@ class Subscriber(Base):
     signup_utm_campaign: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     signup_landing_path: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
