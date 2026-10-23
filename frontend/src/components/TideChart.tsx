@@ -168,7 +168,8 @@ export default function TideChart() {
               label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft', style: { fill: '#64748B', fontSize: 10 } }}
               tick={{ fill: '#64748B', fontSize: 10 }}
               tickLine={{ stroke: '#e5e7eb' }}
-              domain={[-1, 8]}
+              domain={[-2, 8]}
+              ticks={[-2, 0, 2, 4, 6, 8]}
             />
             <Tooltip
               contentStyle={{
@@ -191,7 +192,7 @@ export default function TideChart() {
               strokeWidth={2}
               label={{
                 value: `Flooding Risk (${threshold} ft)`,
-                position: 'right',
+                position: 'insideTopRight',
                 fill: '#FB923C',
                 fontSize: 10,
               }}
@@ -203,7 +204,7 @@ export default function TideChart() {
               strokeWidth={2}
               label={{
                 value: `King Tide (${kingTideHeight} ft)`,
-                position: 'right',
+                position: 'insideTopRight',
                 fill: '#DC2626',
                 fontSize: 10,
               }}
