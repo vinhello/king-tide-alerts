@@ -37,6 +37,21 @@ export interface UpcomingTidesResponse {
   station_id: string;
 }
 
+export interface TidePoint {
+  datetime: string;
+  height: number;
+}
+
+// Measured water level for the past few days and the predictions for the
+// same hours. Empty when the gauge record is unavailable.
+export interface ObservedTidesResponse {
+  observations: TidePoint[];
+  predictions: TidePoint[];
+  days: number;
+  as_of: string;
+  station_id: string;
+}
+
 export interface FeedbackRequest {
   message: string;
   subject?: string;

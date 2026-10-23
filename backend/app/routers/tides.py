@@ -25,6 +25,9 @@ from app.services.noaa import (
     get_king_tides,
 )
 
+from app.schemas.tide import ObservedTidesResponse, TidePoint
+from app.services.recent_tides import get_recent_tides
+
 router = APIRouter(prefix="/api/tides", tags=["tides"])
 
 
@@ -202,4 +205,18 @@ async def current_tide():
         hours_until_high_tide=hours_until_high_tide,
         status=status,
         threshold=settings.KING_TIDE_THRESHOLD,
+    )
+
+
+@router.get("/observed", response_model=ObservedTidesResponse)
+async def observed_tides(days: int = Query(default=3, ge=1, le=7)):
+    """Measured water level for the past few days next to the predictions
+    for the same hours. Reporting only; the chart draws both."""
+    recent = await get_recent_tides(days)
+    return ObservedTidesResponse(
+        observations=[TidePoint(**o) for o in recent.observations],
+        predictions=[TidePoint(**p) for p in recent.predictions],
+        days=recent.days,
+        as_of=recent.as_of,
+        station_id=settings.NOAA_STATION_ID,
     )
