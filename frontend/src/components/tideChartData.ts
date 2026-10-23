@@ -1,8 +1,12 @@
 import type { ObservedTidesResponse, TidePrediction } from "../types";
 
-// Measured water level for the past few days, predictions for the next ten.
-export const OBSERVED_DAYS = 3;
-export const UPCOMING_DAYS = 10;
+// Two views: a short one where the two curves read clearly, and a longer one.
+export const WINDOWS = {
+  week: { label: "7 days", observedDays: 2, upcomingDays: 5 },
+  fortnight: { label: "14 days", observedDays: 3, upcomingDays: 11 },
+} as const;
+
+export type WindowKey = keyof typeof WINDOWS;
 
 export interface ChartDataPoint {
   timestamp: number;
