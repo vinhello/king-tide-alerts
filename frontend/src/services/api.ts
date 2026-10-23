@@ -1,5 +1,6 @@
 import axios from "axios";
 import type {
+  FunnelStats,
   NwsAlertsResponse,
   AdminEvent,
   CheckoutSessionResponse,
@@ -113,6 +114,11 @@ export async function getSubscriberStats(apiKey: string): Promise<SubscriberStat
 
 export async function getNotificationStats(apiKey: string): Promise<NotificationStats> {
   const response = await api.get<NotificationStats>("/api/admin/notifications", adminHeaders(apiKey));
+  return response.data;
+}
+
+export async function getFunnelStats(apiKey: string): Promise<FunnelStats> {
+  const response = await api.get<FunnelStats>("/api/admin/funnel", adminHeaders(apiKey));
   return response.data;
 }
 
