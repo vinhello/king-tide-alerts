@@ -89,8 +89,9 @@ async def test_alerts_are_filtered_deduplicated_and_ranked():
 
     ids = [a.id for a in alerts]
     assert ids[0] == "urn:test:warning"
-    assert len(ids) == len(set(ids)) == 1 + len(FEATURES)
-    assert all("coastal flood" in a.event.lower() for a in alerts)
+    # The two fixture advisories (zone products of one advisory) collapse into one.
+    assert [a.event for a in alerts] == ["Coastal Flood Warning", "Coastal Flood Advisory"]
+    assert len(ids) == len(set(ids)) == 2
 
 
 def test_endpoint_returns_alerts_and_caches(client):
@@ -101,8 +102,9 @@ def test_endpoint_returns_alerts_and_caches(client):
     assert first.status_code == 200
     data = first.json()
     assert data["zones"] == OUR_ZONES
-    assert len(data["alerts"]) == len(FEATURES)
+    assert len(data["alerts"]) == 1  # one advisory issued as two zone products
     alert = data["alerts"][0]
+    assert alert["zones"] == ["CAZ506", "CAZ508"]
     for key in ("event", "what", "when", "ends", "sender_name", "link", "headline"):
         assert alert[key]
     assert second.json() == data
@@ -128,7 +130,8 @@ def test_last_list_is_served_briefly_when_nws_is_unreachable(client, monkeypatch
     far_future = _variant(FEATURES[0], ends="2999-01-01T00:00:00-08:00")
     ended = _variant(FEATURES[0], id="urn:test:ended", ends="2000-01-01T00:00:00-08:00")
     with _fetch([far_future, ended]):
-        assert len(client.get("/api/alerts/nws").json()["alerts"]) == 2
+        # Same event: collapsed to one, the one ending last standing in for both.
+        assert len(client.get("/api/alerts/nws").json()["alerts"]) == 1
     with _fetch(None):
         alerts = client.get("/api/alerts/nws").json()["alerts"]
     # Still shown while fresh enough, minus the one that has ended.
@@ -137,3 +140,29 @@ def test_last_list_is_served_briefly_when_nws_is_unreachable(client, monkeypatch
     monkeypatch.setattr(nws, "STALE_MAX_SECONDS", 0)
     with _fetch(None):
         assert client.get("/api/alerts/nws").json()["alerts"] == []
+
+
+def test_one_banner_per_event_across_zone_products():
+    first = nws.parse_alert(FEATURES[0], OUR_ZONES)
+    second = nws.parse_alert(FEATURES[1], OUR_ZONES)
+    assert first is not None and second is not None
+    assert first.event == second.event and first.id != second.id
+
+    merged = nws.collapse_by_event([first, second])
+
+    assert len(merged) == 1
+    assert merged[0].zones == sorted(set(first.zones) | set(second.zones))
+    assert merged[0].ends == max(first.ends, second.ends)
+    assert merged[0].what == first.what
+
+    warning = replace_event(second, "Coastal Flood Warning")
+    assert [a.event for a in nws.collapse_by_event([first, warning])] == [
+        "Coastal Flood Advisory",
+        "Coastal Flood Warning",
+    ]
+
+
+def replace_event(alert, event):
+    from dataclasses import replace
+
+    return replace(alert, id=alert.id + ":w", event=event)
