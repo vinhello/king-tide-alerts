@@ -41,14 +41,6 @@ function formatTooltipDate(timestamp: number): string {
   });
 }
 
-function formatRangeDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 export default function TideChart() {
   const [windowKey, setWindowKey] = useState<WindowKey>("week");
   const [data, setData] = useState<ChartDataPoint[]>([]);
@@ -90,8 +82,6 @@ export default function TideChart() {
   }, [observedDays, upcomingDays]);
 
   const now = Date.now();
-  const startTimestamp = data.length > 0 ? data[0].timestamp : now;
-  const endTimestamp = data.length > 0 ? data[data.length - 1].timestamp : now;
 
   const windowButtons = (
     <div className="flex items-center gap-2" role="group" aria-label="Chart range">
@@ -137,16 +127,8 @@ export default function TideChart() {
 
   return (
     <div className="w-full">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl mb-1">Tides</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            {hasObserved
-              ? `Measured at the gauge for the past ${observedDays} days, predicted for the next ${upcomingDays}. `
-              : `Predicted for the next ${upcomingDays} days. `}
-            {formatRangeDate(startTimestamp)} – {formatRangeDate(endTimestamp)}
-          </p>
-        </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl">Tides</h2>
         {windowButtons}
       </div>
 
@@ -250,11 +232,11 @@ export default function TideChart() {
             </div>
             <div className="flex items-center gap-2">
               <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
-              <span>Possible bike path flooding ({threshold.toFixed(1)} ft)</span>
+              <span>Path starts flooding ({threshold.toFixed(1)} ft)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #DC2626' }} />
-              <span>High chance of flooding ({kingTideHeight.toFixed(1)} ft)</span>
+              <span>Deeper flooding ({kingTideHeight.toFixed(1)} ft)</span>
             </div>
           </div>
           <a

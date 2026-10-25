@@ -79,7 +79,7 @@ describe("TideChart", () => {
     });
 
     expect(screen.getByRole("heading", { name: "Tides" })).toBeInTheDocument();
-    expect(screen.getByText(/predicted for the next 5 days/i)).toBeInTheDocument();
+    expect(getUpcomingTides).toHaveBeenLastCalledWith(5);
     expect(screen.getByText("Predicted")).toBeInTheDocument();
     expect(screen.getAllByTestId("line")).toHaveLength(1);
     expect(screen.queryByText(/measured at the gauge/i)).not.toBeInTheDocument();
@@ -94,13 +94,14 @@ describe("TideChart", () => {
     render(<TideChart />);
 
     await waitFor(() => {
-      expect(screen.getByText(/measured at the gauge for the past 2 days/i)).toBeInTheDocument();
+      expect(screen.getByText("Measured at the gauge")).toBeInTheDocument();
     });
 
     const lines = screen.getAllByTestId("line").map((el) => el.getAttribute("data-key"));
     expect(lines).toEqual(["predicted", "observed"]);
     expect(screen.getAllByTestId("reference-line")).toHaveLength(3);
-    expect(screen.getByText("Measured at the gauge")).toBeInTheDocument();
+    expect(screen.getByText("Path starts flooding (1.0 ft)")).toBeInTheDocument();
+    expect(screen.getByText("Deeper flooding (1.5 ft)")).toBeInTheDocument();
   });
 
   it("still renders predictions when the observed fetch fails", async () => {
@@ -123,7 +124,7 @@ describe("TideChart", () => {
 
     render(<TideChart />);
     await waitFor(() => {
-      expect(screen.getByText(/measured at the gauge for the past 2 days/i)).toBeInTheDocument();
+      expect(screen.getByText("Measured at the gauge")).toBeInTheDocument();
     });
     expect(getUpcomingTides).toHaveBeenLastCalledWith(5);
     expect(getObservedTides).toHaveBeenLastCalledWith(2);
@@ -131,10 +132,9 @@ describe("TideChart", () => {
     fireEvent.click(screen.getByRole("button", { name: "14 days" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/measured at the gauge for the past 3 days/i)).toBeInTheDocument();
+      expect(getObservedTides).toHaveBeenLastCalledWith(3);
     });
     expect(getUpcomingTides).toHaveBeenLastCalledWith(11);
-    expect(getObservedTides).toHaveBeenLastCalledWith(3);
     expect(screen.getByRole("button", { name: "14 days" })).toHaveAttribute("aria-pressed", "true");
   });
 
