@@ -219,24 +219,29 @@ export default function TideChart() {
         </ResponsiveContainer>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-muted-foreground">
-            {hasObserved && (
+          <div className="flex flex-col gap-2 text-xs sm:text-sm text-muted-foreground">
+            {/* Row one: the two curves. Row two: the two thresholds. */}
+            <div className="flex flex-wrap items-center gap-4">
+              {hasObserved && (
+                <div className="flex items-center gap-2">
+                  <div className="h-0.5 w-6" style={{ borderTop: `3px solid ${MEASURED_COLOR}` }} />
+                  <span>Measured at the gauge</span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
-                <div className="h-0.5 w-6" style={{ borderTop: `3px solid ${MEASURED_COLOR}` }} />
-                <span>Measured at the gauge</span>
+                <div className="h-0.5 w-6" style={{ borderTop: `2px solid ${PREDICTED_COLOR}` }} />
+                <span>Predicted</span>
               </div>
-            )}
-            <div className="flex items-center gap-2">
-              <div className="h-0.5 w-6" style={{ borderTop: `2px solid ${PREDICTED_COLOR}` }} />
-              <span>Predicted</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
-              <span>Path starts flooding ({threshold.toFixed(1)} ft)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #DC2626' }} />
-              <span>Deeper flooding ({kingTideHeight.toFixed(1)} ft)</span>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
+                <span>Path starts flooding ({threshold.toFixed(1)} ft)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #DC2626' }} />
+                <span>Deeper flooding ({kingTideHeight.toFixed(1)} ft)</span>
+              </div>
             </div>
           </div>
           <a
