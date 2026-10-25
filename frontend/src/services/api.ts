@@ -18,6 +18,7 @@ import type {
   SystemHealth,
   TestAlertResponse,
   UnsubscribeResponse,
+  ObservedTidesResponse,
   UpcomingTidesResponse,
 } from "../types";
 
@@ -63,6 +64,15 @@ export async function getUpcomingTides(
 ): Promise<UpcomingTidesResponse> {
   const response = await api.get<UpcomingTidesResponse>(
     `/api/tides/upcoming?days=${days}`
+  );
+  return response.data;
+}
+
+export async function getObservedTides(
+  days: number = 3
+): Promise<ObservedTidesResponse> {
+  const response = await api.get<ObservedTidesResponse>(
+    `/api/tides/observed?days=${days}`
   );
   return response.data;
 }

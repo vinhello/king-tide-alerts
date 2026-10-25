@@ -22,7 +22,7 @@ const FAQ_ITEMS = [
   {
     question: "How accurate are the predictions?",
     answer:
-      "NOAA tide predictions are highly accurate under normal conditions. Weather factors like storms, wind, and pressure changes can cause actual levels to differ, so always check conditions before heading out.",
+      "NOAA's predictions cover the astronomical tide only, the part driven by the sun and moon. Storms, wind, pressure changes, and warm ocean water can push the actual level higher, and so far in 2026 the Golden Gate gauge has often read above its prediction. The tide chart above draws the measured water level for the past three days next to the prediction, so you can see the current gap for yourself. Always check conditions before heading out.",
   },
   {
     question: "When do king tides typically occur?",
