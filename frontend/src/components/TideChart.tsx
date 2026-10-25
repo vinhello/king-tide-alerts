@@ -21,7 +21,7 @@ import {
 
 // Measured water is the ground truth, so it wears the ink color; the
 // prediction keeps the site blue. The two never read alike, for any color
-// vision, and the dashed thresholds are a third style again.
+// vision, and the dashed thresholds are a third style.
 const MEASURED_COLOR = "#1C1917";
 const PREDICTED_COLOR = "#0A7EA4";
 
@@ -182,27 +182,7 @@ export default function TideChart() {
               dataKey="predicted"
               stroke={PREDICTED_COLOR}
               strokeWidth={2}
-              dot={(props: Record<string, unknown>) => {
-                const { cx, cy, payload } = props as {
-                  cx: number;
-                  cy: number;
-                  payload: ChartDataPoint;
-                };
-                if (payload.isKingTide) {
-                  return (
-                    <circle
-                      key={`dot-${cx}-${cy}`}
-                      cx={cx}
-                      cy={cy}
-                      r={4}
-                      fill="#FB923C"
-                      stroke="#FB923C"
-                      strokeWidth={2}
-                    />
-                  );
-                }
-                return null;
-              }}
+              dot={false}
               activeDot={{ r: 4, fill: PREDICTED_COLOR }}
             />
             {hasObserved && (
@@ -210,7 +190,7 @@ export default function TideChart() {
                 type="monotone"
                 dataKey="observed"
                 stroke={MEASURED_COLOR}
-                strokeWidth={2.5}
+                strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4, fill: MEASURED_COLOR }}
               />
@@ -224,7 +204,7 @@ export default function TideChart() {
             <div className="flex flex-wrap items-center gap-4">
               {hasObserved && (
                 <div className="flex items-center gap-2">
-                  <div className="h-0.5 w-6" style={{ borderTop: `3px solid ${MEASURED_COLOR}` }} />
+                  <div className="h-0.5 w-6" style={{ borderTop: `2px solid ${MEASURED_COLOR}` }} />
                   <span>Measured at the gauge</span>
                 </div>
               )}
