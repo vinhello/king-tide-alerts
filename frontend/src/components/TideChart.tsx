@@ -185,30 +185,8 @@ export default function TideChart() {
                 return [`${value.toFixed(1)} ft`, label];
               }}
             />
-            <ReferenceLine
-              y={threshold}
-              stroke="#FB923C"
-              strokeDasharray="5 5"
-              strokeWidth={2}
-              label={{
-                value: `Flooding Risk (${threshold} ft)`,
-                position: 'insideTopRight',
-                fill: '#FB923C',
-                fontSize: 10,
-              }}
-            />
-            <ReferenceLine
-              y={kingTideHeight}
-              stroke="#DC2626"
-              strokeDasharray="5 5"
-              strokeWidth={2}
-              label={{
-                value: `King Tide (${kingTideHeight} ft)`,
-                position: 'insideTopRight',
-                fill: '#DC2626',
-                fontSize: 10,
-              }}
-            />
+            <ReferenceLine y={threshold} stroke="#FB923C" strokeDasharray="5 5" strokeWidth={2} />
+            <ReferenceLine y={kingTideHeight} stroke="#DC2626" strokeDasharray="5 5" strokeWidth={2} />
             {hasObserved && (
               <ReferenceLine
                 x={now}
@@ -272,11 +250,11 @@ export default function TideChart() {
             </div>
             <div className="flex items-center gap-2">
               <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
-              <span>Possible bike path flooding</span>
+              <span>Possible bike path flooding ({threshold} ft)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #DC2626' }} />
-              <span>King tide</span>
+              <span>High chance of flooding ({kingTideHeight} ft)</span>
             </div>
           </div>
           <a
