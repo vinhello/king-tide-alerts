@@ -60,11 +60,11 @@ export default function CurrentTideStatus() {
 
   return (
     <div className="bg-card rounded-lg border border-border border-l-4 border-l-primary shadow-sm p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
         {/* Current height */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <Waves
-            className={`h-5 w-5 shrink-0 ${colorClass}`}
+            className={`h-5 w-5 shrink-0 mt-px ${colorClass}`}
             aria-hidden="true"
           />
           <div>
@@ -79,7 +79,7 @@ export default function CurrentTideStatus() {
 
         {/* Divider */}
         <div
-          className="hidden sm:block h-10 w-px bg-border"
+          className="hidden sm:block w-px self-stretch bg-border"
           aria-hidden="true"
         />
 
@@ -98,14 +98,14 @@ export default function CurrentTideStatus() {
           data.hours_until_high_tide > 0 && (
             <>
               <div
-                className="hidden sm:block h-10 w-px bg-border"
+                className="hidden sm:block w-px self-stretch bg-border"
                 aria-hidden="true"
               />
 
               {/* Next high tide ETA */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 <Clock
-                  className="h-5 w-5 shrink-0 text-muted-foreground"
+                  className="h-5 w-5 shrink-0 mt-px text-muted-foreground"
                   aria-hidden="true"
                 />
                 <div>
