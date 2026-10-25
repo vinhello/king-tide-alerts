@@ -19,11 +19,11 @@ import {
   type WindowKey,
 } from "./tideChartData";
 
-// Measured water wears the site blue; the prediction is a dark warm gray, a
+// Measured water wears the site blue; the prediction is a medium warm gray, a
 // neutral reference line. The two never read alike, for any color vision,
 // and the dashed thresholds are a third style.
 const MEASURED_COLOR = "#0A7EA4";
-const PREDICTED_COLOR = "#44403C";
+const PREDICTED_COLOR = "#57534E";
 
 function formatTickDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString("en-US", {
