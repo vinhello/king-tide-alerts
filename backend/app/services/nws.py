@@ -7,7 +7,7 @@ them. Nothing here interprets or forecasts.
 import logging
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Any
 
@@ -119,6 +119,28 @@ def parse_alert(feature: dict[str, Any], our_zones: list[str]) -> NwsAlert | Non
     )
 
 
+def collapse_by_event(alerts: list[NwsAlert]) -> list[NwsAlert]:
+    """One alert per event name.
+
+    NWS issues a separate product per zone group, so the same advisory for
+    the Bay shoreline and for the Marin coast arrives as two ids with the
+    same text. Riders should see it once: the product ending last stands in
+    for the group, and the zones are the union of all of them.
+    """
+    groups: dict[str, list[NwsAlert]] = {}
+    for alert in alerts:
+        groups.setdefault(alert.event, []).append(alert)
+    merged = []
+    for group in groups.values():
+        representative = max(group, key=lambda a: a.ends)
+        zones = sorted({z for a in group for z in a.zones})
+        link = representative.link
+        if not representative.zones and zones:
+            link = NWS_ZONE_PAGE.format(zone=zones[0])
+        merged.append(replace(representative, zones=zones, link=link))
+    return merged
+
+
 def _rank(alert: NwsAlert) -> tuple[int, str]:
     kind = alert.event.lower().rsplit(" ", 1)[-1]
     return (EVENT_RANK.get(kind, 9), alert.ends)
@@ -159,7 +181,7 @@ async def get_coastal_flood_alerts() -> list[NwsAlert]:
         alert = parse_alert(feature, our_zones)
         if alert is not None and alert.id not in alerts:
             alerts[alert.id] = alert
-    result = sorted(alerts.values(), key=_rank)
+    result = sorted(collapse_by_event(list(alerts.values())), key=_rank)
     _cache = (now, result)
     if result:
         logger.info("NWS in effect: " + "; ".join(f"{a.event} until {a.ends}" for a in result))
