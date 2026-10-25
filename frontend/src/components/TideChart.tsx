@@ -250,11 +250,11 @@ export default function TideChart() {
             </div>
             <div className="flex items-center gap-2">
               <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #FB923C' }} />
-              <span>Possible bike path flooding ({threshold} ft)</span>
+              <span>Possible bike path flooding ({threshold.toFixed(1)} ft)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-0.5 w-6" style={{ borderTop: '2px dashed #DC2626' }} />
-              <span>High chance of flooding ({kingTideHeight} ft)</span>
+              <span>High chance of flooding ({kingTideHeight.toFixed(1)} ft)</span>
             </div>
           </div>
           <a
