@@ -56,11 +56,11 @@ export default function PrivacyPolicy() {
 
             <h2>Analytics</h2>
             <p>
-              We use Plausible Analytics to understand how many people visit the site and which
-              pages and features they use. Plausible is privacy-friendly: it sets no cookies,
-              does not track you across sites, and collects no personal information. Counts of
-              actions such as signing up or downloading the calendar are recorded without any
-              identifying details.
+              We use PostHog to understand how many people visit the site and which pages and
+              features they use. It runs in cookieless mode: it sets no cookies, stores nothing
+              in your browser, does not track you across sites, and collects no personal
+              information. Counts of actions such as signing up or downloading the calendar are
+              recorded without any identifying details.
             </p>
 
             <h2>Data Sharing</h2>

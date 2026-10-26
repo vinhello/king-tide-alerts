@@ -119,7 +119,8 @@ describe("SubscribeForm resend link", () => {
 describe("SubscribeForm analytics", () => {
   it("records a Subscribe event after a successful signup", async () => {
     const user = userEvent.setup();
-    window.plausible = vi.fn();
+    const capture = vi.fn();
+    window.posthog = { capture };
     vi.mocked(subscribe).mockResolvedValueOnce({
       id: "123",
       name: "Test",
@@ -136,8 +137,8 @@ describe("SubscribeForm analytics", () => {
     await user.click(screen.getByRole("button", { name: /subscribe/i }));
 
     await waitFor(() => {
-      expect(window.plausible).toHaveBeenCalledWith("Subscribe", { props: { channel: "email" } });
+      expect(capture).toHaveBeenCalledWith("Subscribe", { channel: "email" });
     });
-    delete window.plausible;
+    delete window.posthog;
   });
 });
