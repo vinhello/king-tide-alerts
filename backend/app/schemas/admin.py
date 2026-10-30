@@ -57,11 +57,23 @@ class AdminEvent(BaseModel):
     notifications_sent: int
 
 
+class FeedbackHealth(BaseModel):
+    """Feedback form outcomes since the backend started (kept in memory)."""
+
+    since: datetime
+    sent: int
+    failed: int
+    bot_dropped: int
+    last_failure_at: Optional[datetime]
+    last_failure_reason: Optional[str]
+
+
 class SystemHealth(BaseModel):
     scheduler_running: bool
     next_run_time: Optional[str]
     environment: str
     latest_event_at: Optional[datetime]
+    feedback: FeedbackHealth
 
 
 class TestAlertResponse(BaseModel):
