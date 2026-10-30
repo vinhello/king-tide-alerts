@@ -32,11 +32,20 @@ class NudgeOutcome:
     window_days: int
     recipients: list[NudgeRecipient] = field(default_factory=list)
     sent: int = 0
+    min_age_hours: int = 24
 
 
-def find_unconfirmed(db: Session, window_days: int) -> list[Subscriber]:
-    """Unconfirmed email signups within the window that have not been nudged."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
+def find_unconfirmed(
+    db: Session, window_days: int, min_age_hours: int = 24
+) -> list[Subscriber]:
+    """Unconfirmed email signups within the window that have not been nudged.
+
+    Signups younger than min_age_hours are left out: their confirmation
+    email is still fresh, and a reminder on top of it reads as nagging.
+    """
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=window_days)
+    newest = now - timedelta(hours=min_age_hours)
     already_nudged = select(NotificationSent.subscriber_id).where(
         NotificationSent.notification_type == NotificationType.CONFIRMATION
     )
@@ -47,6 +56,7 @@ def find_unconfirmed(db: Session, window_days: int) -> list[Subscriber]:
             Subscriber.unsubscribed_at.is_(None),
             Subscriber.email.isnot(None),
             Subscriber.created_at >= cutoff,
+            Subscriber.created_at <= newest,
             ~Subscriber.id.in_(already_nudged),
         )
         .order_by(Subscriber.created_at)
@@ -55,20 +65,27 @@ def find_unconfirmed(db: Session, window_days: int) -> list[Subscriber]:
 
 
 async def nudge_unconfirmed(
-    db: Session, window_days: int = 30, dry_run: bool = True
+    db: Session,
+    window_days: int = 30,
+    dry_run: bool = True,
+    min_age_hours: int = 24,
 ) -> NudgeOutcome:
     """Send (or, by default, only plan) one reminder per unconfirmed signup."""
-    subscribers = find_unconfirmed(db, window_days)
+    subscribers = find_unconfirmed(db, window_days, min_age_hours)
     outcome = NudgeOutcome(
         dry_run=dry_run,
         window_days=window_days,
+        min_age_hours=min_age_hours,
         recipients=[
             NudgeRecipient(name=s.name, email=s.email or "", signed_up=s.created_at)
             for s in subscribers
         ],
     )
     if dry_run:
-        logger.info(f"Nudge dry run: {len(subscribers)} unconfirmed signups in {window_days} days")
+        logger.info(
+            f"Nudge dry run: {len(subscribers)} unconfirmed signups in "
+            f"{window_days} days, at least {min_age_hours} h old"
+        )
         return outcome
 
     for subscriber in subscribers:
