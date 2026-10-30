@@ -17,6 +17,7 @@ from app.schemas.admin import (
     AdminEvent,
     AlertRunPreview,
     DailyCount,
+    FeedbackHealth,
     FunnelRun,
     FunnelSource,
     FunnelStage,
@@ -85,7 +86,7 @@ async def admin_health(
         next_run_time=next_run_time,
         environment=settings.ENVIRONMENT,
         latest_event_at=latest_event.created_at if latest_event else None,
-        feedback=feedback_stats.snapshot(),
+        feedback=FeedbackHealth(**feedback_stats.snapshot()),
     )
 
 
