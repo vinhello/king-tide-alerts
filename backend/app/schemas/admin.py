@@ -111,6 +111,7 @@ class NudgeResult(BaseModel):
 
     dry_run: bool
     window_days: int
+    min_age_hours: int
     recipient_count: int
     recipients: list[NudgeRecipient]
     sent: int

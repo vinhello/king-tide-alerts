@@ -5,13 +5,21 @@ import pytest
 
 from app.models.notification_sent import NotificationSent, NotificationType
 from app.models.subscriber import NotificationPreference, Subscriber
+from app.rate_limit import limiter
 from app.services.nudge import find_unconfirmed, nudge_unconfirmed
 from app.utils.email_templates import confirmation_reminder_email
 
 HEADERS = {"x-admin-password": "test-password"}
 
 
-def _signup(db, email, *, confirmed=False, days_ago=1, name="Rider"):
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    limiter.reset()
+    yield
+    limiter.reset()
+
+
+def _signup(db, email, *, confirmed=False, days_ago=2, name="Rider"):
     sub = Subscriber(
         name=name, email=email, notification_preference=NotificationPreference.EMAIL,
         unsubscribe_token=f"tok-{email}", confirmed=confirmed,
@@ -33,6 +41,17 @@ def test_find_unconfirmed_filters_confirmed_old_and_already_nudged(test_db):
 
     found = find_unconfirmed(test_db, window_days=30)
     assert [s.id for s in found] == [recent.id]
+
+
+def test_find_unconfirmed_skips_signups_younger_than_min_age(test_db):
+    fresh = _signup(test_db, "fresh@example.com", days_ago=0.1)
+    ready = _signup(test_db, "ready@example.com", days_ago=1.5)
+
+    found = find_unconfirmed(test_db, window_days=30)
+    assert [s.id for s in found] == [ready.id]
+
+    everyone = find_unconfirmed(test_db, window_days=30, min_age_hours=0)
+    assert {s.id for s in everyone} == {fresh.id, ready.id}
 
 
 @pytest.mark.asyncio
@@ -103,6 +122,21 @@ def test_admin_nudge_sends_only_when_explicitly_asked(client, test_db):
     assert response.status_code == 200
     assert response.json()["sent"] == 1
     send.assert_awaited_once()
+
+
+def test_admin_nudge_min_age_defaults_to_a_day(client, test_db):
+    _signup(test_db, "fresh@example.com", days_ago=0.1)
+
+    default = client.post("/api/admin/nudge-unconfirmed", headers=HEADERS)
+    assert default.status_code == 200
+    assert default.json()["min_age_hours"] == 24
+    assert default.json()["recipient_count"] == 0
+
+    disabled = client.post(
+        "/api/admin/nudge-unconfirmed?min_age_hours=0", headers=HEADERS
+    )
+    assert disabled.status_code == 200
+    assert disabled.json()["recipient_count"] == 1
 
 
 def test_admin_nudge_requires_auth(client):

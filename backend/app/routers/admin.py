@@ -450,6 +450,9 @@ async def nudge_unconfirmed_signups(
     request: Request,
     dry_run: bool = Query(default=True, description="False actually sends"),
     days: int = Query(default=30, ge=1, le=365),
+    min_age_hours: int = Query(
+        default=24, ge=0, le=720, description="Skip signups younger than this"
+    ),
     _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
@@ -459,7 +462,9 @@ async def nudge_unconfirmed_signups(
     Only dry_run=false sends, and each recipient is recorded so nobody is
     reminded twice.
     """
-    outcome = await nudge.nudge_unconfirmed(db, window_days=days, dry_run=dry_run)
+    outcome = await nudge.nudge_unconfirmed(
+        db, window_days=days, dry_run=dry_run, min_age_hours=min_age_hours
+    )
 
     sample_subject = None
     sample_html = None
@@ -474,6 +479,7 @@ async def nudge_unconfirmed_signups(
     return NudgeResult(
         dry_run=outcome.dry_run,
         window_days=outcome.window_days,
+        min_age_hours=outcome.min_age_hours,
         recipient_count=len(outcome.recipients),
         recipients=[
             NudgeRecipient(name=r.name, email=r.email, signed_up=r.signed_up)
