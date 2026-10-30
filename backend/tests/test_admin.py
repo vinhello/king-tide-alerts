@@ -390,3 +390,26 @@ def test_alert_run_for_real_detects_then_sends_once(client, test_db):
     mock_send.assert_called_once()
     assert second.json()["alerts"] == []
     assert test_db.query(NotificationSent).count() == 1
+
+
+def test_admin_health_reports_feedback_counters(client):
+    from app.services.feedback_stats import feedback_stats
+
+    feedback_stats.reset()
+    feedback_stats.record_sent()
+    feedback_stats.record_failure("Resend: 429 Too Many Requests")
+    try:
+        response = client.get(
+            "/api/admin/health",
+            headers={"x-admin-password": "test-password"},
+        )
+    finally:
+        feedback_stats.reset()
+
+    assert response.status_code == 200
+    feedback = response.json()["feedback"]
+    assert feedback["sent"] == 1
+    assert feedback["failed"] == 1
+    assert feedback["bot_dropped"] == 0
+    assert "429" in feedback["last_failure_reason"]
+    assert feedback["since"] is not None

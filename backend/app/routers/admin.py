@@ -33,6 +33,7 @@ from app.schemas.admin import (
     TestAlertResponse,
 )
 from app.rate_limit import limiter
+from app.services.feedback_stats import feedback_stats
 from app.services import email_events, funnel, nudge
 from app.services.king_tide_detector import (
     AlertRunPlan,
@@ -84,6 +85,7 @@ async def admin_health(
         next_run_time=next_run_time,
         environment=settings.ENVIRONMENT,
         latest_event_at=latest_event.created_at if latest_event else None,
+        feedback=feedback_stats.snapshot(),
     )
 
 

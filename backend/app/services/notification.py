@@ -18,6 +18,10 @@ from app.utils.email_templates import (
 logger = logging.getLogger(__name__)
 
 
+class EmailSendError(Exception):
+    """Resend refused or failed to accept an email we tried to send."""
+
+
 def _get_twilio_client() -> TwilioClient:
     return TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
@@ -28,11 +32,14 @@ async def send_email(
     html: str,
     reply_to: str | None = None,
     headers: dict[str, str] | None = None,
+    raise_on_error: bool = False,
 ) -> str | None:
     """Send an email via Resend. Respects the NOTIFICATIONS_ENABLED switch.
 
     Returns Resend's id for the email, which its delivery webhooks later
-    refer to, or None when nothing was sent.
+    refer to, or None when nothing was sent. A failure is logged and swallowed
+    unless raise_on_error is set, in which case it is raised as EmailSendError
+    for callers who can tell someone about it.
     """
     if not settings.NOTIFICATIONS_ENABLED:
         logger.info(f"Notifications disabled; would have emailed {to}: {subject}")
@@ -54,6 +61,8 @@ async def send_email(
         return _provider_message_id(response)
     except Exception as e:
         logger.error(f"Failed to send email to {to}: {e}")
+        if raise_on_error:
+            raise EmailSendError(str(e)) from e
         return None
 
 
@@ -229,7 +238,9 @@ async def send_feedback(
     """Email a visitor's feedback to the project inbox.
 
     Reply-To is set to the visitor's address when they provided one, so a
-    normal reply from the inbox goes back to them.
+    normal reply from the inbox goes back to them. Raises EmailSendError when
+    Resend fails, so the visitor can be told; with notifications switched off
+    the email is only logged, which counts as accepted.
     """
     subject_line = subject or "Website feedback"
     html = feedback_email(
@@ -240,6 +251,7 @@ async def send_feedback(
         f"[King Tide Alert feedback] {subject_line}",
         html,
         reply_to=reply_email,
+        raise_on_error=True,
     )
 
 
