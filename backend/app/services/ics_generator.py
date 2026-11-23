@@ -1,4 +1,10 @@
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+# Tide times come from NOAA in the station's local time and are kept with
+# that wall-clock reading (see recent_tides.STATION_TZ). A calendar needs the
+# real instant, so the reading is placed in Pacific time before conversion.
+STATION_TZ = ZoneInfo("America/Los_Angeles")
 
 
 def _escape_ics_text(text: str) -> str:
@@ -48,8 +54,9 @@ def generate_ics(events: list[dict], station_id: str = "9414290") -> str:
             dt = dt.replace(tzinfo=timezone.utc)
 
         height: float = event["predicted_height"]
-        dtstart = (dt - timedelta(hours=2)).strftime("%Y%m%dT%H%M%SZ")
-        dtend = (dt + timedelta(hours=2)).strftime("%Y%m%dT%H%M%SZ")
+        peak = dt.replace(tzinfo=STATION_TZ).astimezone(timezone.utc)
+        dtstart = (peak - timedelta(hours=2)).strftime("%Y%m%dT%H%M%SZ")
+        dtend = (peak + timedelta(hours=2)).strftime("%Y%m%dT%H%M%SZ")
 
         if height >= 6.5:
             summary = f"King Tide Flooding - {height:.1f} ft"
