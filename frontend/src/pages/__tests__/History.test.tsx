@@ -90,3 +90,23 @@ describe("History", () => {
     expect(screen.getByRole("button", { name: /past/i })).toBeInTheDocument();
   });
 });
+
+describe("History dates", () => {
+  it("shows the station's date for an early-morning tide", async () => {
+    // 7:50 AM Pacific on Friday Dec 4, as the API sends it. Read in a
+    // Pacific browser's own zone this used to show Thursday Dec 3.
+    vi.mocked(getEventHistory).mockResolvedValue({
+      ...sampleResponse,
+      events: [{ ...sampleEvent, event_datetime: "2026-12-04T07:50:00+00:00" }],
+    });
+    render(
+      <MemoryRouter>
+        <History />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Fri, Dec 4, 2026")).toBeInTheDocument();
+    });
+  });
+});
