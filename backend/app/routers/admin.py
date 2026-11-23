@@ -35,6 +35,7 @@ from app.schemas.admin import (
 )
 from app.rate_limit import limiter
 from app.services.feedback_stats import feedback_stats
+from app.utils.station_time import station_wall_clock_now
 from app.services import email_events, funnel, nudge
 from app.services.king_tide_detector import (
     AlertRunPlan,
@@ -311,7 +312,7 @@ async def upcoming_events(
     _key: str = Depends(verify_admin_auth),
     db: Session = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
+    now = station_wall_clock_now()
     events = (
         db.query(KingTideEvent)
         .filter(KingTideEvent.event_datetime >= now)

@@ -9,13 +9,26 @@ type FilterOption = "all" | "upcoming" | "past";
 
 const PER_PAGE = 50;
 
+// Tide times arrive as the station's local (Pacific) clock reading labelled
+// UTC. Reading them back in UTC shows the station's date to every visitor;
+// the browser's own zone would shift early-morning tides to the day before.
 function formatEventDate(datetime: string): string {
   return new Date(datetime).toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
+}
+
+// The station's current clock reading in the same convention, so "upcoming"
+// means the tide has not happened yet at the station.
+function stationWallClockNow(): Date {
+  const reading = new Date().toLocaleString("sv-SE", {
+    timeZone: "America/Los_Angeles",
+  });
+  return new Date(`${reading.replace(" ", "T")}Z`);
 }
 
 function heightColorClass(
@@ -49,7 +62,7 @@ function EventCard({ event, threshold, kingTideHeight }: EventCardProps) {
             <span className="text-sm font-medium text-foreground">
               {formatEventDate(event.event_datetime)}
             </span>
-            {new Date(event.event_datetime) > new Date() && (
+            {new Date(event.event_datetime) > stationWallClockNow() && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                 Upcoming
               </span>

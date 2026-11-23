@@ -18,6 +18,7 @@ from app.schemas.tide import (
     UpcomingTidesResponse,
 )
 from app.services.ics_generator import generate_ics
+from app.utils.station_time import station_wall_clock_now
 from app.services.noaa import (
     fetch_current_water_level,
     fetch_hourly_tide_predictions,
@@ -59,7 +60,7 @@ async def tide_history(
     filter: Literal["all", "upcoming", "past"] = Query("all"),
     db: Session = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
+    now = station_wall_clock_now()
 
     notification_count = func.count(NotificationSent.id).label("notifications_sent")
     query = (
@@ -111,8 +112,8 @@ async def tide_calendar(
     days: int = Query(90, ge=1, le=365),
     db: Session = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
-    cutoff = now.replace(tzinfo=timezone.utc)
+    now = station_wall_clock_now()
+    cutoff = now
     end = now + timedelta(days=days)
 
     db_events = (

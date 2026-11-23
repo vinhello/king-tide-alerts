@@ -1,9 +1,10 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 import httpx
 
 from app.config import settings
+from app.utils.station_time import station_now
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ async def fetch_tide_predictions(
     Returns only high tides (type == "H") with height relative to MHHW.
     """
     station = station_id or settings.NOAA_STATION_ID
-    now = datetime.now(timezone.utc)
+    now = station_now()
     begin = now.strftime("%Y%m%d")
     end = (now + timedelta(days=days_ahead)).strftime("%Y%m%d")
 
@@ -74,7 +75,7 @@ async def fetch_hourly_tide_predictions(
     Returns one prediction per hour, used for chart display.
     """
     station = station_id or settings.NOAA_STATION_ID
-    now = datetime.now(timezone.utc)
+    now = station_now()
     begin = now.strftime("%Y%m%d")
     end = (now + timedelta(days=days_ahead)).strftime("%Y%m%d")
 
@@ -173,7 +174,7 @@ async def fetch_next_high_tide(station_id: str | None = None) -> dict | None:
 
     # NOAA lst_ldt returns local time strings; parse and compare as naive
     # to stay consistent with the timezone the API returns
-    now_local_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    now_local_str = station_now().strftime("%Y-%m-%d %H:%M")
 
     for pred in predictions:
         if pred["datetime"] > now_local_str:
