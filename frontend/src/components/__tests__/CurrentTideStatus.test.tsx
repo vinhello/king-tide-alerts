@@ -39,24 +39,42 @@ describe("CurrentTideStatus", () => {
     expect(screen.getByLabelText(/loading current tide status/i)).toBeInTheDocument();
   });
 
-  it("renders safe status with 'Safe to Ride'", async () => {
+  it("renders safe status as 'Flooding unlikely'", async () => {
     vi.mocked(getCurrentTideStatus).mockResolvedValueOnce(safeTideData);
     render(<CurrentTideStatus />);
 
     await waitFor(() => {
-      expect(screen.getByText("Safe to Ride")).toBeInTheDocument();
+      expect(screen.getByText("Flooding unlikely")).toBeInTheDocument();
     });
 
     expect(screen.getByText("2.3 ft")).toBeInTheDocument();
     expect(screen.getByText(/4\.5 hours/i)).toBeInTheDocument();
   });
 
-  it("renders flooded status with 'Path Flooded'", async () => {
+  it("renders caution status as 'Flooding possible' and names the gauge", async () => {
+    vi.mocked(getCurrentTideStatus).mockResolvedValueOnce({
+      ...safeTideData,
+      current_height: 5.4,
+      status: "caution",
+    });
+    render(<CurrentTideStatus />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Flooding possible")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Flood Risk Now")).toBeInTheDocument();
+    expect(
+      screen.getByText(/measured at the Golden Gate gauge/i)
+    ).toBeInTheDocument();
+  });
+
+  it("renders flooded status as 'Flooding likely'", async () => {
     vi.mocked(getCurrentTideStatus).mockResolvedValueOnce(floodedTideData);
     render(<CurrentTideStatus />);
 
     await waitFor(() => {
-      expect(screen.getByText("Path Flooded")).toBeInTheDocument();
+      expect(screen.getByText("Flooding likely")).toBeInTheDocument();
     });
 
     expect(screen.getByText("6.9 ft")).toBeInTheDocument();

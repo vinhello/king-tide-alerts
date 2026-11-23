@@ -5,10 +5,12 @@ import type { CurrentTideStatus as CurrentTideStatusType } from "../types";
 
 const REFRESH_INTERVAL_MS = 360000; // 6 minutes
 
+// The reading comes from the Golden Gate gauge, not from the path itself, so
+// the labels state how likely flooding is rather than what the path looks like.
 function statusLabel(status: CurrentTideStatusType["status"]): string {
-  if (status === "flooded") return "Path Flooded";
-  if (status === "caution") return "Use Caution";
-  return "Safe to Ride";
+  if (status === "flooded") return "Flooding likely";
+  if (status === "caution") return "Flooding possible";
+  return "Flooding unlikely";
 }
 
 function statusColorClass(status: CurrentTideStatusType["status"]): string {
@@ -86,7 +88,7 @@ export default function CurrentTideStatus() {
         {/* Status badge */}
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide">
-            Path Status
+            Flood Risk Now
           </p>
           <p className={`text-base font-medium ${colorClass}`}>
             {statusLabel(data.status)}
@@ -126,6 +128,10 @@ export default function CurrentTideStatus() {
             </>
           )}
       </div>
+      <p className="mt-4 text-xs text-muted-foreground">
+        Based on the water level measured at the Golden Gate gauge. Conditions
+        on the path can differ.
+      </p>
     </div>
   );
 }
