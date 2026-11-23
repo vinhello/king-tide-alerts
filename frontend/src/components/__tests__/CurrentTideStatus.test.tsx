@@ -63,7 +63,7 @@ describe("CurrentTideStatus", () => {
       expect(screen.getByText("Flooding possible")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Flood Risk Now")).toBeInTheDocument();
+    expect(screen.getByText("Path Status")).toBeInTheDocument();
     expect(
       screen.getByText(/measured at the Golden Gate gauge/i)
     ).toBeInTheDocument();

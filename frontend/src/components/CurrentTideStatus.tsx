@@ -88,7 +88,7 @@ export default function CurrentTideStatus() {
         {/* Status badge */}
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide">
-            Flood Risk Now
+            Path Status
           </p>
           <p className={`text-base font-medium ${colorClass}`}>
             {statusLabel(data.status)}
